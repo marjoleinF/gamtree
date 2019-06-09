@@ -1,0 +1,307 @@
+---
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "inst/README-figures/README-",
+  dpi = 124
+)
+```
+
+# gamtree: Generalized additive model trees
+
+Experimental functions for fitting partially additive GAM-based recursive partitions: partially additive GAMs, comprising both global and local model components. The global components are fitted on all observations of a training dataset, while the local compontents are fitted on subgroups of the training dataset, which are detected from the data using model-based recursive partitioning.
+
+For fitting the smooth and parametric terms, package **mgcv** is employed. For recursive partitioning, package **partykit** is employed. 
+
+Some examples are provided below, and in the file `Examples.R`. But first some to-dos:
+
+
+## To-do's
+
+- Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function.)
+
+- The estimated smooths from the tree and the full GAM have similar, but not the same coefficients. Is that problematic? See section `Different coefficient estimates` below.
+
+- Perform a simulation study to evaluate accuracy. Generate data where there is a local smooth term, with varying coefficients, as well as a global model with random effects and an additional global smooth or global parametric term. Compare accuracy of a full partially additive GAM (i.e., function `gamtree()` with `gam_form` specified), a partitioned GAM (i.e., local GAMs only; function `gamtree()` with `gam_form = NULL`), and a globally fitted GAM (i.e., no partitioning, function `gam()`). 
+
+- Compare performance of function `gamtree()` (with and without `gam_form` specified) and `gam()` as in simulation study, but use existing data.
+
+
+
+
+# Example
+
+First, we load the package:
+
+```{r, warning=FALSE, message=FALSE}
+library("gamtree")
+```
+
+Next, we load an example dataset to illustrate the functionality of package **gamtree**:
+
+```{r}
+data(eco)
+```
+
+
+## GAM-based recursive partition without global effects
+
+We first fit a GAM-based recursive partition without global effects. In that case, we only have to specify the first formula argument (`tree_form`). Only the predictor and response variables need to be specified. By default, a smooth function of the predictor will be fitted, using function `s()` from package **mgcv**. The default arguments of function `s()` will be employed, later examples will show how the arguments of function `s()` can be specified:
+
+```{r}
+gt1 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE)
+```
+
+By default, `gamtree()` plots progress information to the command line, which was suppressed here by specifying `verbose = FALSE`.
+
+We can inspect the partition by plotting it as follows:
+
+```{r}
+plot(gt1, which = "tree", gp = gpar(cex = .7))
+```
+
+By specifying the `gp` argument, the font size for the node and path labels were reduced in size.
+
+Using the `plot` method, we can also inspect the fitted GAMs in the terminal nodes:
+
+```{r}
+plot(gt1, which = "nodes")
+```
+
+Or, using the `coef` method we can plot the coefficients from the terminal nodes:
+
+```{r}
+coef(gt1)
+```
+
+The plots in the terminal nodes indicate somewhat wiggly lines. Inspecting the distribution of the observations in the terminal nodes, these wiggly lines may overfit the data somewhat. We may thus want to specify a lower value for argument `k` of function `s()` (i.e., number of estimated coefficients for the thin-plate regression spline). We can pass a list of addtional arguments to function `s()` through the `s_ctrl` argument of function `gamtree()`: 
+
+```{r}
+gt2 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
+               s_ctrl = list(k = 5L))
+plot(gt2, which = "tree", gp = gpar(cex = .7))
+plot(gt2, which = "nodes")
+```
+
+The lines are less wiggly, which seems more appropriate (at least, to the eye). However, terminal node 4 and 5 has a model which is almost linear. Perhaps this is due to the small node size. Also, the $p$ value for the split separating nodes 4 and 5 is somewhat higher than the other $p$ values, again indicating that this split may be less reliable. 
+
+We can do an additional check on the observation-level contributions to the gradient. These should sum to (a value close to) zero. We can do this using the `check_grad()` function. It computes the sum of the observation-wise contributions to the gradient. These sums should be reasonably close to zero:
+
+```{r}
+check_grad(gt2)
+```
+
+We see the largest non-zero values for (terminal) node 4. All in all, the results indicate that it may be better to collapse nodes 4 and 5. We can do that through specifying the `maxdepth` argument, which should be passed to the `mob_ctrl`, which controls the recursive partitioning:
+
+```{r}
+gt3 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE,
+               s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+plot(gt3, which = "tree", gp = gpar(cex = .7))
+plot(gt3, which = "nodes")
+```
+
+By collapsing nodes 4 and 5, we get a more non-linear curve, which seems to provide a somewhat better representation of the datapoints. 
+
+
+
+
+
+## GAM-based recursive partition with global effects
+
+We use function `gamertree()` to fit the same tree as above (specified through the `tree_form` argument), as well as a global model. The global model is specified through the second `gam_form` argument, which is `NULL` by default, indicating that there are only local parameters to be estimated.
+
+Again, we have to use the `s_ctrl` argument to pass the `k` argument to function `s()` used in the partitioning. Note also that the arguments for the global model are specified in the formula directly, as is customary for the `gam()` function:
+ 
+```{r}
+gt4 <- gamtree(tree_form = Pn ~ PAR | Species, 
+               gam_form = Pn ~ noise + s(cluster_id, bs = "re"),
+               data = eco, verbose = FALSE, s_ctrl = list(k = 5L),  
+               mob_ctrl = mob_control(maxdepth = 3L))
+gt4$iterations
+```
+
+Estimation converged in two iterations. Probably because accounting for the global effects has little effect for these data, as specified predictors for the global model are in fact noise variables. We can obtain test statistics for the significance of the global and local effects in the full GAMM as follows:
+
+```{r}
+summary(gt4$gamm) 
+```
+
+Note that the standard errors and degrees of freedom do not account for the searching of the tree structure and are therefore likely too low, yielding overly optimistic (i.e., too low) $p$ values.
+
+The effect of the smooths is significant in every terminal tree node. As expected, the global fixed and random  effects are not significant. We will probably also see this in ther estimated random-effects coefficients being close to zero:
+
+```{r}
+coef(gt4, which = 'global')
+```
+
+By default, the `coef` method returns the local estimates:
+
+```{r}
+coef(gt4)
+```
+
+We can plot the tree and the models fitted in each of the terminal nodes:
+
+```{r}
+plot(gt4, which = "tree", gp = gpar(cex = .7))
+plot(gt4, which = "nodes")
+```
+
+Again, we check whether the sums of the observation-wise gradient contributions are reasonably close to zero:
+
+```{r}
+check_grad(gt4)
+```
+
+All observation-wise gradient contributions sum to values reasonably close to 0.
+
+
+## Specifying multiple predictor variables for the node-specific GAMs
+
+If multiple predictors are specified in the node-specific model, they will both be passed into the same `s()` call, by default:
+
+```{r}
+gt5 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
+               gam_form = Pn ~ s(cluster_id, bs = "re"),
+               data = eco, verbose = FALSE, s_ctrl = list(k = 5L),  
+               mob_ctrl = mob_control(maxdepth = 3L))
+summary(gt5$gamm)
+coef(gt5$tree)
+```
+
+Alternatively, multiple local smooth terms will be estimated by specifying the `n_FUN` argument (which equals `1L`, by default):
+
+```{r}
+gt6 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
+               gam_form = Pn ~ s(cluster_id, bs = "re"),
+               data = eco, verbose = FALSE, s_ctrl = list(k = 5L),  
+               mob_ctrl = mob_control(maxdepth = 3L),
+               n_FUN = 2L)
+summary(gt6$gamm)
+coef(gt6$tree)
+```
+
+Alternatively, a different function than `s()` can be employed by specifying the `FUN` argument (which equals `s`, by default). The `k` argument ha a different effect for `te()` than for `()`, so we set it to a lower value here:
+
+```{r}
+gt7 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
+               gam_form = Pn ~ s(cluster_id, bs = "re"),
+               data = eco, verbose = FALSE, s_ctrl = list(k = 3L),  
+               mob_ctrl = mob_control(maxdepth = 3L),
+               FUN = "te")
+summary(gt7$gamm)
+coef(gt7$tree)
+```
+
+
+# Issue: Different coefficient estimates
+
+The estimated coefficients from the final tree use the predictions based on global effects from the full GAM from the second-to-last iteration. As far as I know, this should yield the exact same coefficient estimates between the tree and the full GAM. But they are not (though similar) and I am not sure if this is something to be worried about:
+
+```{r}
+coef(gt4)
+coef(gt4$tree)
+```
+
+
+```{r}
+plot(gt4, which = "nodes")
+```
+
+```{r}
+par(mfrow = c(2,3))
+plot(gt4$gamm)
+```
+
+The plots also indicate very similar, but not identical effects.
+
+We can also compare the predicted vaues:
+
+```{r}
+newdat <- eco
+newdat$x <- newdat$PAR
+preds <- data.frame(gamtree = predict(gt4),
+                    gam = predict(gt4$gamm),
+                    tree = predict(gt4$tree, newdata = newdat, 
+                                   type = "response"))
+cor(preds)
+colMeans(preds)
+sapply(preds, var)
+sapply(preds, max)
+sapply(preds, min)
+```
+
+The same happens when we have no global parameters, but re-estimate the smooth parameters, given the subgroups from the tree:
+
+```{r}
+coef(gt1)
+coef(gt1$tree)
+```
+
+```{r}
+plot(gt1, which = "nodes")
+```
+
+```{r}
+plot(gt1$gamm)
+```
+
+```{r}
+preds <- data.frame(gamtree = predict(gt1),
+                    gam = predict(gt1$gamm),
+                    tree = predict(gt1$tree, newdata = newdat, 
+                                   type = "response"))
+cor(preds)
+colMeans(preds)
+sapply(preds, var)
+sapply(preds, max)
+sapply(preds, min)
+```
+
+
+
+```{r, eval=FALSE, echo=FALSE}
+## Tests for gam fitting function with MOB:
+
+photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
+                    control = mob_control(xtype = "data.frame"))
+photo_gammob # works, single smooth of PAR and noise
+
+## Check two predictors, one function:
+photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
+                    control = mob_control(xtype = "data.frame"))
+photo_gammob ## works, get some kind of interaction function of PAR and noise
+## Check two predictors, two functions:
+photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
+                    control = mob_control(xtype = "data.frame"), n_FUN = 2)
+photo_gammob ## works, get separate function for PAR and noise
+
+## Check two predictors, function other than s (ti or te):
+photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
+                    control = mob_control(xtype = "data.frame"), FUN = "ti")
+photo_gammob ## works, get ti function of PAR and noise
+
+## Check two predictors, two functions other than s:
+photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
+                    control = mob_control(xtype = "data.frame"), n_fUN = 2, FUN = "ti")
+photo_gammob ## specification makes no sense, but get ti(PAR, noise) which is fine
+
+## Check two predictors, with single function and arguments:
+photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
+                    control = mob_control(xtype = "data.frame"), 
+                    s_ctrl = list(k=4L, bs="re", fx=TRUE))
+photo_gammob # seems to work
+## Check two predictors, with two functions and arguments:
+photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
+                    control = mob_control(xtype = "data.frame"), n_fUN = 2,
+                    s_ctrl = list(k=4L, bs="re"))
+photo_gammob # seems to work
+
+plot(photo_gammob, terminal = node_bivplot, gp = gpar(cex = .7))
+```

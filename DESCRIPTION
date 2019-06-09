@@ -1,0 +1,13 @@
+Package: gamtree
+Title: GAM-based Recursive Partitioning
+Version: 0.0.1
+Authors@R: person("Marjolein", "Fokkema", email = "m.fokkema@fsw.leidenuniv.nl", role = c("aut", "cre"))
+Description: Recursively partitions the observations in a dataset, based on the parameters of a locally
+	specified generalized additive model (GAM), while possibly also estimating globally specified GAM 
+	terms. Uses package mgcv for fitting smooth and parametetric terms, used function package partykit 
+	for recursive partitioning.
+Depends: R (>= 3.5.3), mgcv, partykit, sandwich
+License: GPL-2 | GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
