@@ -7,12 +7,12 @@
 #' categorical indicator for a random intercept). 
 #'
 #' \itemize{
-#'   \item Species: a categorical covariate, indicator for specie (signal).
-#'   \item PAR: a continuous covariate (signal).
-#'   \item Pn: continuous response variable (signal).
-#'   \item cluster_id: a categorical covariate; indicator for random intercept
+#'   \item Species: categorical partitioning variable, indicator for specie (signal).
+#'   \item PAR: continuous predictor variable for the node-specific model (signal).
+#'   \item Pn: continuous response variable.
+#'   \item cluster_id: categorical covariate; indicator for a random intercept
 #'   term (noise).
-#'   \item noise: a continuous covariate (noise).
+#'   \item noise: continuous covariate (noise).
 #' }
 #'
 #' @name eco
