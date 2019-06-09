@@ -89,7 +89,7 @@ plot(gt2, which = "tree", gp = gpar(cex = .7))
 plot(gt2, which = "nodes")
 ```
 
-The lines are less wiggly, which seems more appropriate (at least, to the eye). However, terminal node 4 and 5 has a model which is almost linear. Perhaps this is due to the small node size. Also, the $p$ value for the split separating nodes 4 and 5 is somewhat higher than the other $p$ values, again indicating that this split may be less reliable. 
+The lines are less wiggly, which seems more appropriate (at least, to the eye). However, terminal node 4 has a model which is almost linear. Perhaps this is due to the small node size. Also, the $p$ value for the split separating nodes 4 and 5 is somewhat higher than the other $p$ values, again indicating that this split may be less reliable. 
 
 We can do an additional check on the observation-level contributions to the gradient. These should sum to (a value close to) zero. We can do this using the `check_grad()` function. It computes the sum of the observation-wise contributions to the gradient. These sums should be reasonably close to zero:
 
@@ -97,7 +97,7 @@ We can do an additional check on the observation-level contributions to the grad
 check_grad(gt2)
 ```
 
-We see the largest non-zero values for (terminal) node 4. All in all, the results indicate that it may be better to collapse nodes 4 and 5. We can do that through specifying the `maxdepth` argument, which should be passed to the `mob_ctrl`, which controls the recursive partitioning:
+We see the largest non-zero values for (terminal) node 4. All in all, the results indicate that it may be better to collapse nodes 4 and 5. We can do that through specifying the `maxdepth` argument, which should be passed to the `mob_ctrl` argument, which controls the recursive partitioning procedure:
 
 ```{r}
 gt3 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE,
@@ -114,7 +114,7 @@ By collapsing nodes 4 and 5, we get a more non-linear curve, which seems to prov
 
 ## GAM-based recursive partition with global effects
 
-We use function `gamertree()` to fit the same tree as above (specified through the `tree_form` argument), as well as a global model. The global model is specified through the second `gam_form` argument, which is `NULL` by default, indicating that there are only local parameters to be estimated.
+We use function `gamertree()` to fit the same tree as above (specified through the `tree_form` argument), as well as a global model. The global model is specified through the second `gam_form` argument, which is `NULL` by default, indicating that there are only local parameters to be estimated. Here, we supply the `noise` and `cluster_id` variables to the global model. These are noise variables, so these should not have significant or substantial effects. They merely serve to illustrate specification of the global model. We specify `noise` as having a parametric (i.e., linear) effect. We specify `cluster_id` as an indicator for a random intercept term (which can be done through function `s()` and specifying `bs = "re"`). 
 
 Again, we have to use the `s_ctrl` argument to pass the `k` argument to function `s()` used in the partitioning. Note also that the arguments for the global model are specified in the formula directly, as is customary for the `gam()` function:
  
@@ -126,7 +126,7 @@ gt4 <- gamtree(tree_form = Pn ~ PAR | Species,
 gt4$iterations
 ```
 
-Estimation converged in two iterations. Probably because accounting for the global effects has little effect for these data, as specified predictors for the global model are in fact noise variables. We can obtain test statistics for the significance of the global and local effects in the full GAMM as follows:
+Estimation converged in two iterations. Probably because accounting for the global effects has little effect for these data, as specified predictors for the global model are in fact noise variables. We can obtain test statistics for the significance of the global and local effects in the full GAM as follows:
 
 ```{r}
 summary(gt4$gamm) 
@@ -134,7 +134,7 @@ summary(gt4$gamm)
 
 Note that the standard errors and degrees of freedom do not account for the searching of the tree structure and are therefore likely too low, yielding overly optimistic (i.e., too low) $p$ values.
 
-The effect of the smooths is significant in every terminal tree node. As expected, the global fixed and random  effects are not significant. We will probably also see this in ther estimated random-effects coefficients being close to zero:
+The effect of the smooths is significant in every terminal tree node. As expected, the global fixed and random  effects are not significant. We will probably also see this in their estimated random-effects coefficients being close to zero:
 
 ```{r}
 coef(gt4, which = 'global')
@@ -187,7 +187,7 @@ summary(gt6$gamm)
 coef(gt6$tree)
 ```
 
-Alternatively, a different function than `s()` can be employed by specifying the `FUN` argument (which equals `s`, by default). The `k` argument ha a different effect for `te()` than for `()`, so we set it to a lower value here:
+Alternatively, a different function than `s()` can be employed by specifying the `FUN` argument (which equals `"s"`, by default). The `k` argument has a different effect for `te()` than for `s()`, so we set it to a lower value here:
 
 ```{r}
 gt7 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
