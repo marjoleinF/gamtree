@@ -1,14 +1,14 @@
 gamtree: Generalized additive model trees
 =========================================
 
-Experimental functions for fitting partially additive GAM-based recursive partitions: partially additive GAMs, comprising both global and local model components. The global components are fitted on all observations of a training dataset, while the local compontents are fitted on subgroups of the training dataset, which are detected from the data using model-based recursive partitioning.
+Experimental functions for fitting partially additive GAMs: GAMs comprising both global and local model components. The local components are fitted on subgroups of the training dataset, which are detected using model-based recursive partitioning. The global components are fitted on all observations of the training dataset. Specification of local components is required, specification of global components is optional. Some examples are provided below.
 
 For fitting the smooth and parametric terms, package **mgcv** is employed. For recursive partitioning, package **partykit** is employed.
 
-Some examples are provided below, and in the file `Examples.R`. But first some to-dos:
+The package is experimental and much work needs to be done still.
 
-To-do's
--------
+To-do list
+----------
 
 -   Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function.)
 
@@ -429,7 +429,7 @@ plot(gt4, which = "nodes")
 ![](inst/README-figures/README-unnamed-chunk-21-1.png)
 
 ``` r
-par(mfrow = c(2,3))
+par(mfrow = c(2, 3))
 plot(gt4$gamm)
 ```
 
@@ -437,7 +437,7 @@ plot(gt4$gamm)
 
 The plots also indicate very similar, but not identical effects.
 
-We can also compare the predicted vaues:
+We can also compare the predicted values:
 
 ``` r
 newdat <- eco
@@ -464,6 +464,8 @@ sapply(preds, min)
 #>  gamtree      gam     tree 
 #> 2.001505 2.001505 2.166788
 ```
+
+The predicted values seem very similar, but not the same.
 
 The same happens when we have no global parameters, but re-estimate the smooth parameters, given the subgroups from the tree:
 
@@ -499,10 +501,11 @@ plot(gt1, which = "nodes")
 ![](inst/README-figures/README-unnamed-chunk-25-1.png)
 
 ``` r
+par(mfrow = c(2, 2))
 plot(gt1$gamm)
 ```
 
-![](inst/README-figures/README-unnamed-chunk-26-1.png)![](inst/README-figures/README-unnamed-chunk-26-2.png)![](inst/README-figures/README-unnamed-chunk-26-3.png)![](inst/README-figures/README-unnamed-chunk-26-4.png)
+![](inst/README-figures/README-unnamed-chunk-26-1.png)
 
 ``` r
 preds <- data.frame(gamtree = predict(gt1),

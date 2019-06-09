@@ -15,14 +15,14 @@ knitr::opts_chunk$set(
 
 # gamtree: Generalized additive model trees
 
-Experimental functions for fitting partially additive GAM-based recursive partitions: partially additive GAMs, comprising both global and local model components. The global components are fitted on all observations of a training dataset, while the local compontents are fitted on subgroups of the training dataset, which are detected from the data using model-based recursive partitioning.
+Experimental functions for fitting partially additive GAMs: GAMs comprising both global and local model components. The local components are fitted on subgroups of the training dataset, which are detected using model-based recursive partitioning. The global components are fitted on all observations of the training dataset. Specification of local components is required, specification of global components is optional. Some examples are provided below.
 
 For fitting the smooth and parametric terms, package **mgcv** is employed. For recursive partitioning, package **partykit** is employed. 
 
-Some examples are provided below, and in the file `Examples.R`. But first some to-dos:
+The package is experimental and much work needs to be done still.
 
 
-## To-do's
+## To-do list
 
 - Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function.)
 
@@ -215,13 +215,13 @@ plot(gt4, which = "nodes")
 ```
 
 ```{r}
-par(mfrow = c(2,3))
+par(mfrow = c(2, 3))
 plot(gt4$gamm)
 ```
 
 The plots also indicate very similar, but not identical effects.
 
-We can also compare the predicted vaues:
+We can also compare the predicted values:
 
 ```{r}
 newdat <- eco
@@ -237,6 +237,8 @@ sapply(preds, max)
 sapply(preds, min)
 ```
 
+The predicted values seem very similar, but not the same.
+
 The same happens when we have no global parameters, but re-estimate the smooth parameters, given the subgroups from the tree:
 
 ```{r}
@@ -249,6 +251,7 @@ plot(gt1, which = "nodes")
 ```
 
 ```{r}
+par(mfrow = c(2, 2))
 plot(gt1$gamm)
 ```
 
@@ -262,46 +265,4 @@ colMeans(preds)
 sapply(preds, var)
 sapply(preds, max)
 sapply(preds, min)
-```
-
-
-
-```{r, eval=FALSE, echo=FALSE}
-## Tests for gam fitting function with MOB:
-
-photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
-                    control = mob_control(xtype = "data.frame"))
-photo_gammob # works, single smooth of PAR and noise
-
-## Check two predictors, one function:
-photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
-                    control = mob_control(xtype = "data.frame"))
-photo_gammob ## works, get some kind of interaction function of PAR and noise
-## Check two predictors, two functions:
-photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
-                    control = mob_control(xtype = "data.frame"), n_FUN = 2)
-photo_gammob ## works, get separate function for PAR and noise
-
-## Check two predictors, function other than s (ti or te):
-photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
-                    control = mob_control(xtype = "data.frame"), FUN = "ti")
-photo_gammob ## works, get ti function of PAR and noise
-
-## Check two predictors, two functions other than s:
-photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
-                    control = mob_control(xtype = "data.frame"), n_fUN = 2, FUN = "ti")
-photo_gammob ## specification makes no sense, but get ti(PAR, noise) which is fine
-
-## Check two predictors, with single function and arguments:
-photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
-                    control = mob_control(xtype = "data.frame"), 
-                    s_ctrl = list(k=4L, bs="re", fx=TRUE))
-photo_gammob # seems to work
-## Check two predictors, with two functions and arguments:
-photo_gammob <- mob(Pn ~ PAR + noise | Species, data = eco, fit = gam_fit,
-                    control = mob_control(xtype = "data.frame"), n_fUN = 2,
-                    s_ctrl = list(k=4L, bs="re"))
-photo_gammob # seems to work
-
-plot(photo_gammob, terminal = node_bivplot, gp = gpar(cex = .7))
 ```
