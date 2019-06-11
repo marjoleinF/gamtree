@@ -80,7 +80,9 @@ gamtree <- function(tree_form, gam_form = NULL, data, abstol = 0.001,
   if (is.null(s_ctrl)) {
     if (n_FUN == 1L) {
       new <- paste0(FUN, "(", paste0(new, collapse = ", "), ", by = .tree)")
-      new_alt <- paste0(FUN, "(", paste0(new_alt, collapse = ", "), ")")
+      mob_gam_rhs <- new_alt <- paste0(
+        FUN, "(", paste0(new_alt, collapse = ", "), ")")
+      s_args <- NULL
     } else {
       ## Create a function call for each predictor:
       preds <- preds_alt <- character()
@@ -90,26 +92,65 @@ gamtree <- function(tree_form, gam_form = NULL, data, abstol = 0.001,
         preds_alt <- c(preds_alt, paste0(FUN, "(", new_alt[i], ")"))
       }
       new <- paste0(preds, collapse = " + ")
-      new_alt <- paste0(preds_alt, collapse = " + ") 
+      mob_gam_rhs <- new_alt <- paste0(preds_alt, collapse = " + ") 
+      s_args <- NULL
     }
   } else {
+    ## Prepare arguments to be passed to smooth functions:
     s_ctrl_tmp <- s_ctrl
-    if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
-      s_ctrl_tmp[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
-    }
-    args <- paste(paste(names(s_ctrl), s_ctrl_tmp, sep = "="), collapse = ", ")
-    if (n_FUN == 1L) {
-      new <- paste0(FUN, "(", paste0(new, collapse = ", "), ", ", args, ", by = .tree)")
-      new_alt <- paste0(FUN, "(", paste0(new_alt, collapse = ", "), ", ", args, ")")
+    if (is.list(s_ctrl[[1L]])) {
+      ## Then make args a list of length n_FUN:
+      if (n_FUN > 1L) {
+        if (!length(s_ctrl_tmp) %in% c(1L, n_FUN)) 
+          warning("Argument s_ctrl should specify a list containing 1 or n_FUN lists.") 
+        s_args <- list()
+        for (i in 1L:n_FUN) {
+          if (any(char_ids <- sapply(s_ctrl[[i]], inherits, "character"))) {
+            s_ctrl_tmp[[i]][char_ids] <- paste0("'", s_ctrl[[i]][char_ids], "'")
+          }
+          s_args[[i]] <- paste(paste(names(s_ctrl[[i]]), s_ctrl_tmp[[i]], sep = "="), 
+                             collapse = ", ")
+        }
+      } else if (n_FUN == 1L) {
+        warning("Argument s_ctrl should specify a list containing 1 or n_FUN lists. Only the first list of s_ctrl will be used.")
+        s_ctrl <- s_ctrl_tmp <- s_ctrl[[1L]]
+        if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
+          s_ctrl_tmp[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
+        }
+        s_args <- paste(paste(names(s_ctrl), s_ctrl_tmp, sep = "="), collapse = ", ")  
+      }
     } else {
-      if (length(new) != n_FUN) warning("Number of local smooths should be equal to 1, or number of predictor variables.")
+      if (n_FUN == 1L) {
+        if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
+          s_ctrl_tmp[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
+        }
+        s_args <- paste(paste(names(s_ctrl), s_ctrl_tmp, sep = "="), collapse = ", ")  
+      } else {
+        s_args <- list()
+        s_ctrl_tmp <- s_ctrl
+        for (i in 1L:n_FUN) {
+          if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
+            s_ctrl_tmp[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
+          }
+          s_args[[i]] <- paste(paste(names(s_ctrl), s_ctrl_tmp, sep = "="), collapse = ", ")           
+        }
+      }
+    }
+    
+    ## Prepare components of full GAM formula:
+    if (n_FUN == 1L) {
+      new <- paste0(FUN, "(", paste0(new, collapse = ", "), ", ", s_args, ", by = .tree)")
+      mob_gam_rhs <- new_alt <- paste0(
+        FUN, "(", paste0(new_alt, collapse = ", "), ", ", s_args, ")")
+    } else if (n_FUN > 1L) {
+      if (length(new) != n_FUN) warning("n_FUN should be equal to 1, or the number of predictor variables.")
       preds <- preds_alt <- character()
       for (i in 1:length(new)) {
-        preds <- c(preds, paste0(FUN, "(", new[i], ", ", args, ", by = .tree)"))
-        preds_alt <- c(preds_alt, paste0(FUN, "(", new_alt[i], ", ", args, ")"))
+        preds <- c(preds, paste0(FUN, "(", new[i], ", ", s_args[[i]], ", by = .tree)"))
+        preds_alt <- c(preds_alt, paste0(FUN, "(", new_alt[i], ", ", s_args[[i]], ")"))
       }
       new <- paste0(preds, collapse = " + ")
-      new_alt <- paste0(preds_alt, collapse = " + ")
+      mob_gam_rhs <- new_alt <- paste0(preds_alt, collapse = " + ")
     }
   }
   ## Construct full GAM formula:
@@ -135,10 +176,9 @@ gamtree <- function(tree_form, gam_form = NULL, data, abstol = 0.001,
     if (verbose) print(paste("iteration", iteration))
     
     ## Grow tree and get node memberships:
-    tree <- mob(tree_form, data = data, 
-                fit = gam_fit, method = "REML",
-                offset = .global, control = mob_ctrl,
-                s_ctrl = s_ctrl, ...) 
+    tree <- mob(tree_form, data = data, mob_gam_rhs = mob_gam_rhs, 
+                fit = gam_fit, method = "REML", offset = .global, 
+                control = mob_ctrl, ...) 
     data$.tree <- factor(predict(tree, newdata = data, type = "node"))
     
     ## Fit gam with global and local models:
@@ -214,49 +254,23 @@ gamtree <- function(tree_form, gam_form = NULL, data, abstol = 0.001,
 ##
 ## Fitting function for gam-based recursive partitioning with MOB.
 ##
-gam_fit <- function(y, x = NULL, start = NULL, weights = NULL, 
-                    s_ctrl = NULL, offset = NULL, FUN = "s", 
-                    n_FUN = 1L, ...) {
+##
+## mob_gam_rhs: character. Right-hand side of formula for fitting node-specific 
+##              GAMs. some examples:
+##                "s(time, k = 4L, bs = 'cr')" or
+##                "s(time, k = 4L, bs = 'cr')" or 
+##                "ti(time, length)" or
+##                "te(time, length, fx = TRUE)"
+## 
+gam_fit <- function(y, x, start = NULL, weights = NULL, 
+                    offset = NULL, mob_gam_rhs, ...) {
   
-  ## TODO: allow for passing arguments to the s() function
-  ## TODO: allow for speciyfing other functions than s() (e.g., te(), ti() and t2() terms)
-  ## TODO: allow for using bam() instead of gam() (or create bam_fit() function)
-  ## TODO: allow for passing > 1 variable as a predictor to the node-specific model
-  pred_names <- colnames(x)
-  
-  ## Prepare the right-hand side of the fitting formula:
-  rhs <- character()
-  if (!is.null(s_ctrl)) {
-    if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
-      s_ctrl[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
-    }
-    args <- paste(paste(names(s_ctrl), s_ctrl, sep = "="), collapse = ", ")
-  }
-  if (n_FUN == length(pred_names)) {
-    for (i in 1:n_FUN) {
-      if (is.null(s_ctrl)) {
-        rhs <- c(rhs, paste0(FUN, "(", pred_names[i], ")"))
-      } else {
-        rhs <- c(rhs, paste0(FUN, "(", pred_names[i], ", ", args, ")"))
-      }
-    }
-    rhs <- paste(rhs, collapse = " + ")
-  } else {
-    if (n_FUN > 1L) 
-      warning("Only a single local smooth function of multiple predictor variables may be specified.")
-    if (is.null(s_ctrl)) {
-      rhs <- paste(pred_names, collapse = ", ")
-      rhs <-  paste0(FUN, "(", rhs, ")")
-    } else {
-      rhs <- paste(pred_names, collapse = ", ")
-      rhs <- paste0(FUN, "(", rhs, ", ", args, ")")
-    }
-  }
   ## Add response and create formula:
-  ff <- as.formula(paste0("y ~ ", rhs))
+  ff <- as.formula(paste0("y ~ ", mob_gam_rhs))
   
   ## Fit and return model:
   gam(ff, offset = offset, weights = weights, data = cbind(x, y), ...)
+  
 }
 
 

@@ -52,6 +52,9 @@ data(eco)
 
 ## GAM-based recursive partition without global effects
 
+
+### Specifying and fitting the model
+
 We first fit a GAM-based recursive partition without global effects. In that case, we only have to specify the first formula argument (`tree_form`). Only the predictor and response variables need to be specified. By default, a smooth function of the predictor will be fitted, using function `s()` from package **mgcv**. The default arguments of function `s()` will be employed, later examples will show how the arguments of function `s()` can be specified:
 
 ```{r}
@@ -59,6 +62,9 @@ gt1 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE)
 ```
 
 By default, `gamtree()` plots progress information to the command line, which was suppressed here by specifying `verbose = FALSE`.
+
+
+### Inspecting the results
 
 We can inspect the partition by plotting it as follows:
 
@@ -82,6 +88,9 @@ coef(gt1)
 
 The plots in the terminal nodes indicate somewhat wiggly lines. Inspecting the distribution of the observations in the terminal nodes, these wiggly lines may overfit the data somewhat. We may thus want to specify a lower value for argument `k` of function `s()` (i.e., number of estimated coefficients for the thin-plate regression spline). We can pass a list of addtional arguments to function `s()` through the `s_ctrl` argument of function `gamtree()`: 
 
+
+### Specifying non-default arguments for defining smooths
+
 ```{r}
 gt2 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
                s_ctrl = list(k = 5L))
@@ -91,6 +100,9 @@ plot(gt2, which = "nodes")
 
 The lines are less wiggly, which seems more appropriate (at least, to the eye). However, terminal node 4 has a model which is almost linear. Perhaps this is due to the small node size. Also, the $p$ value for the split separating nodes 4 and 5 is somewhat higher than the other $p$ values, again indicating that this split may be less reliable. 
 
+
+### Further diagnostics: gradient contributions
+
 We can do an additional check on the observation-level contributions to the gradient. These should sum to (a value close to) zero. We can do this using the `check_grad()` function. It computes the sum of the observation-wise contributions to the gradient. These sums should be reasonably close to zero:
 
 ```{r}
@@ -98,6 +110,9 @@ check_grad(gt2)
 ```
 
 We see the largest non-zero values for (terminal) node 4. All in all, the results indicate that it may be better to collapse nodes 4 and 5. We can do that through specifying the `maxdepth` argument, which should be passed to the `mob_ctrl` argument, which controls the recursive partitioning procedure:
+
+
+### Specifying non-default arguments for the partitioning: Restricting maximum tree depth
 
 ```{r}
 gt3 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE,
@@ -164,6 +179,11 @@ All observation-wise gradient contributions sum to values reasonably close to 0.
 
 ## Specifying multiple predictor variables for the node-specific GAMs
 
+Multiple predictor variables can be specified for the node-specific model. Note that for the node-specific model, currently only smooth function can be specified; parametric terms are not supported (yet). Specifying a large number of smooth functions for the node-specific models is probably not a good idea; it will yield results which are difficult to interpret and possibly unstable, or one or more errors.
+
+
+### Single smooth term with multiple predictor variables
+
 If multiple predictors are specified in the node-specific model, they will both be passed into the same `s()` call, by default:
 
 ```{r}
@@ -175,7 +195,9 @@ summary(gt5$gamm)
 coef(gt5$tree)
 ```
 
-Alternatively, multiple local smooth terms will be estimated by specifying the `n_FUN` argument (which equals `1L`, by default):
+### Multiple separate smooth terms 
+
+Alternatively, multiple separate local smooth terms will be estimated if `n_FUN` argument is specified (which equals `1L`, by default):
 
 ```{r}
 gt6 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
@@ -187,22 +209,49 @@ summary(gt6$gamm)
 coef(gt6$tree)
 ```
 
-Alternatively, a different function than `s()` can be employed by specifying the `FUN` argument (which equals `"s"`, by default). The `k` argument has a different effect for `te()` than for `s()`, so we set it to a lower value here:
+If multiple smooth terms are specified, and they should have different arguments for the smooth function, a `list` composed of `n_FUN` lists should be supplied to the `s_ctrl` argument. For example, if we want to specify a different dimension of the basis used to represent the smooth terms for the `PAR` and `noise` variables (i.e., different values for `k`), we specify a `list` containing separate lists of control arguments for the smooth functions. E.g.:
 
 ```{r}
 gt7 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
                gam_form = Pn ~ s(cluster_id, bs = "re"),
+               data = eco, verbose = FALSE, 
+               s_ctrl = list(list(k = 5L), list(k = 4L)),  
+               mob_ctrl = mob_control(maxdepth = 3L),
+               n_FUN = 2L)
+summary(gt7$gamm)
+coef(gt7$tree)
+coef(gt7)
+gt7$gamm_form
+coef(gt7$gamm)
+gt7$tree_form
+```
+
+### Using smooth functions other than `s()`
+
+Alternatively, a different function than `s()` can be employed by specifying the `FUN` argument (which equals `"s"`, by default). The `k` argument has a different effect for `te()` than for `s()`, so we set it to a lower value here:
+
+```{r}
+gt8 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
+               gam_form = Pn ~ s(cluster_id, bs = "re"),
                data = eco, verbose = FALSE, s_ctrl = list(k = 3L),  
                mob_ctrl = mob_control(maxdepth = 3L),
                FUN = "te")
-summary(gt7$gamm)
-coef(gt7$tree)
+summary(gt8$gamm)
+coef(gt8$tree)
+summary(gt8$gamm)
+coef(gt8$tree)
+coef(gt8)
+gt8$gamm_form
+coef(gt8$gamm)
+gt8$tree_form
 ```
 
 
 # Issue: Different coefficient estimates
 
 The estimated coefficients from the final tree use the predictions based on global effects from the full GAM from the second-to-last iteration. As far as I know, this should yield the exact same coefficient estimates between the tree and the full GAM. But they are not (though similar) and I am not sure if this is something to be worried about:
+
+### Differences in estimated coefficients
 
 ```{r}
 coef(gt4)
@@ -221,6 +270,8 @@ plot(gt4$gamm)
 
 The plots also indicate very similar, but not identical effects.
 
+### Differences in predicted values
+
 We can also compare the predicted values:
 
 ```{r}
@@ -235,11 +286,15 @@ colMeans(preds)
 sapply(preds, var)
 sapply(preds, max)
 sapply(preds, min)
+plot(preds)
 ```
 
 The predicted values seem very similar, but not the same.
 
-The same happens when we have no global parameters, but re-estimate the smooth parameters, given the subgroups from the tree:
+
+### Differences in absence of global model
+
+The same happens when we have no global smooth or parametric functions, but re-estimate the smooth parameters, given the subgroups from the tree:
 
 ```{r}
 coef(gt1)
@@ -258,11 +313,15 @@ plot(gt1$gamm)
 ```{r}
 preds <- data.frame(gamtree = predict(gt1),
                     gam = predict(gt1$gamm),
-                    tree = predict(gt1$tree, newdata = newdat, 
+                    tree = predict(gt1$tree, newdata = gt1$data, 
                                    type = "response"))
 cor(preds)
 colMeans(preds)
 sapply(preds, var)
 sapply(preds, max)
 sapply(preds, min)
+plot(preds)
 ```
+
+
+
