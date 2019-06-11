@@ -24,13 +24,15 @@ The package is experimental and much work needs to be done still.
 
 ## To-do list
 
-- Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function.)
+- Programming: Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function.)
 
-- The estimated smooths from the tree and the full GAM have similar, but not the same coefficients. Is that problematic? See section `Different coefficient estimates` below.
+- Programming: Allow for specifying multiple different smooth function types, instead of only one, through the `FUN` argument.
 
-- Perform a simulation study to evaluate accuracy. Generate data where there is a local smooth term, with varying coefficients, as well as a global model with random effects and an additional global smooth or global parametric term. Compare accuracy of a full partially additive GAM (i.e., function `gamtree()` with `gam_form` specified), a partitioned GAM (i.e., local GAMs only; function `gamtree()` with `gam_form = NULL`), and a globally fitted GAM (i.e., no partitioning, function `gam()`). 
+- Issue: The estimated smooths from the tree and the full GAM have similar, but not the same coefficients. Is that problematic? See section `Different coefficient estimates` below.
 
-- Compare performance of function `gamtree()` (with and without `gam_form` specified) and `gam()` as in simulation study, but use existing data.
+- Testing of the method: Perform a simulation study to evaluate accuracy. Generate data where there is a local smooth term, with varying coefficients, as well as a global model with random effects and an additional global smooth or global parametric term. Compare accuracy of a full partially additive GAM (i.e., function `gamtree()` with `gam_form` specified), a partitioned GAM (i.e., local GAMs only; function `gamtree()` with `gam_form = NULL`), and a globally fitted GAM (i.e., no partitioning, function `gam()`). 
+
+- Testing of the method: Compare performance of function `gamtree()` (with and without `gam_form` specified) and `gam()` as in simulation study, but use existing data.
 
 
 
@@ -289,8 +291,7 @@ We can also compare the predicted values:
 ```{r}
 newdat <- eco
 newdat$x <- newdat$PAR
-preds <- data.frame(gamtree = predict(gt4),
-                    gam = predict(gt4$gamm),
+preds <- data.frame(gam = predict(gt4$gamm),
                     tree = predict(gt4$tree, newdata = newdat, 
                                    type = "response"))
 cor(preds)
@@ -323,8 +324,7 @@ plot(gt1$gamm)
 ```
 
 ```{r}
-preds <- data.frame(gamtree = predict(gt1),
-                    gam = predict(gt1$gamm),
+preds <- data.frame(gam = predict(gt1$gamm),
                     tree = predict(gt1$tree, newdata = gt1$data, 
                                    type = "response"))
 cor(preds)

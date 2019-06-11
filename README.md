@@ -10,13 +10,15 @@ The package is experimental and much work needs to be done still.
 To-do list
 ----------
 
--   Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function.)
+-   Programming: Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function.)
 
--   The estimated smooths from the tree and the full GAM have similar, but not the same coefficients. Is that problematic? See section `Different coefficient estimates` below.
+-   Programming: Allow for specifying multiple different smooth function types, instead of only one, through the `FUN` argument.
 
--   Perform a simulation study to evaluate accuracy. Generate data where there is a local smooth term, with varying coefficients, as well as a global model with random effects and an additional global smooth or global parametric term. Compare accuracy of a full partially additive GAM (i.e., function `gamtree()` with `gam_form` specified), a partitioned GAM (i.e., local GAMs only; function `gamtree()` with `gam_form = NULL`), and a globally fitted GAM (i.e., no partitioning, function `gam()`).
+-   Issue: The estimated smooths from the tree and the full GAM have similar, but not the same coefficients. Is that problematic? See section `Different coefficient estimates` below.
 
--   Compare performance of function `gamtree()` (with and without `gam_form` specified) and `gam()` as in simulation study, but use existing data.
+-   Testing of the method: Perform a simulation study to evaluate accuracy. Generate data where there is a local smooth term, with varying coefficients, as well as a global model with random effects and an additional global smooth or global parametric term. Compare accuracy of a full partially additive GAM (i.e., function `gamtree()` with `gam_form` specified), a partitioned GAM (i.e., local GAMs only; function `gamtree()` with `gam_form = NULL`), and a globally fitted GAM (i.e., no partitioning, function `gam()`).
+
+-   Testing of the method: Compare performance of function `gamtree()` (with and without `gam_form` specified) and `gam()` as in simulation study, but use existing data.
 
 Example
 =======
@@ -639,27 +641,25 @@ We can also compare the predicted values:
 ``` r
 newdat <- eco
 newdat$x <- newdat$PAR
-preds <- data.frame(gamtree = predict(gt4),
-                    gam = predict(gt4$gamm),
+preds <- data.frame(gam = predict(gt4$gamm),
                     tree = predict(gt4$tree, newdata = newdat, 
                                    type = "response"))
 cor(preds)
-#>           gamtree       gam      tree
-#> gamtree 1.0000000 1.0000000 0.9980367
-#> gam     1.0000000 1.0000000 0.9980367
-#> tree    0.9980367 0.9980367 1.0000000
+#>            gam      tree
+#> gam  1.0000000 0.9980367
+#> tree 0.9980367 1.0000000
 colMeans(preds)
-#>  gamtree      gam     tree 
-#> 4.130796 4.130796 4.132666
+#>      gam     tree 
+#> 4.130796 4.132666
 sapply(preds, var)
-#>  gamtree      gam     tree 
-#> 1.700635 1.700635 1.701535
+#>      gam     tree 
+#> 1.700635 1.701535
 sapply(preds, max)
-#>  gamtree      gam     tree 
-#> 6.950960 6.950960 6.873325
+#>      gam     tree 
+#> 6.950960 6.873325
 sapply(preds, min)
-#>  gamtree      gam     tree 
-#> 2.001505 2.001505 2.166788
+#>      gam     tree 
+#> 2.001505 2.166788
 plot(preds)
 ```
 
@@ -710,27 +710,25 @@ plot(gt1$gamm)
 ![](inst/README-figures/README-unnamed-chunk-28-1.png)
 
 ``` r
-preds <- data.frame(gamtree = predict(gt1),
-                    gam = predict(gt1$gamm),
+preds <- data.frame(gam = predict(gt1$gamm),
                     tree = predict(gt1$tree, newdata = gt1$data, 
                                    type = "response"))
 cor(preds)
-#>           gamtree       gam      tree
-#> gamtree 1.0000000 1.0000000 0.9958099
-#> gam     1.0000000 1.0000000 0.9958099
-#> tree    0.9958099 0.9958099 1.0000000
+#>            gam      tree
+#> gam  1.0000000 0.9958099
+#> tree 0.9958099 1.0000000
 colMeans(preds)
-#>  gamtree      gam     tree 
-#> 4.130796 4.130796 4.130796
+#>      gam     tree 
+#> 4.130796 4.130796
 sapply(preds, var)
-#>  gamtree      gam     tree 
-#> 1.818162 1.818162 1.795889
+#>      gam     tree 
+#> 1.818162 1.795889
 sapply(preds, max)
-#>  gamtree      gam     tree 
-#> 7.027005 7.027005 6.888124
+#>      gam     tree 
+#> 7.027005 6.888124
 sapply(preds, min)
-#>  gamtree      gam     tree 
-#> 1.288532 1.288532 1.614462
+#>      gam     tree 
+#> 1.288532 1.614462
 plot(preds)
 ```
 
