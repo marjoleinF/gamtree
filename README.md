@@ -100,7 +100,7 @@ plot(gt2, which = "nodes")
 
 ![](inst/README-figures/README-unnamed-chunk-8-2.png)
 
-The lines are less wiggly, which seems more appropriate (at least, to the eye). However, terminal node 4 has a model which is almost linear. Perhaps this is due to the small node size. Also, the *p* value for the split separating nodes 4 and 5 is somewhat higher than the other *p* values, again indicating that this split may be less reliable.
+The lines are less wiggly, which seems more appropriate (at least, to the eye). The tree now also has an additional split. However, terminal node 4 has a model which is almost linear. Perhaps this is due to the small node size. Also, the *p* value for the split separating nodes 4 and 5 is somewhat higher than the other *p* values, again indicating that this split may be less reliable.
 
 ### Further diagnostics: gradient contributions
 
@@ -120,32 +120,41 @@ check_grad(gt2)
 #> 9  1.756460e-13 -0.1995831 -0.1948963 -0.025229130  5.905346e-14
 ```
 
-We see the largest non-zero values for (terminal) node 4. All in all, the results indicate that it may be better to collapse nodes 4 and 5. We can do that through specifying the `maxdepth` argument, which should be passed to the `mob_ctrl` argument, which controls the recursive partitioning procedure:
+We see the largest non-zero values for (terminal) node 4. All in all, the results indicate that it may be better to collapse nodes 4 and 5 (see below).
 
 ### Specifying non-default arguments for the partitioning: Restricting maximum tree depth
+
+One way to collapse the bottom two nodes is by restricting the maximum tree. We can do that through specifying the `maxdepth` argument, which should be passed to the `mob_ctrl` argument, which controls the recursive partitioning procedure:
 
 ``` r
 gt3 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE,
                s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+```
+
+Function `mob_ctrl` (from package **partykit**) generates a `list` of control arguments for function `mob()`, which is used by `gamtree()` for the partitioning.
+
+We inspect the result:
+
+``` r
 plot(gt3, which = "tree", gp = gpar(cex = .7))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-10-1.png)
+![](inst/README-figures/README-unnamed-chunk-11-1.png)
 
 ``` r
 plot(gt3, which = "nodes")
 ```
 
-![](inst/README-figures/README-unnamed-chunk-10-2.png)
+![](inst/README-figures/README-unnamed-chunk-11-2.png)
 
-By collapsing nodes 4 and 5, we get a more non-linear curve, which seems to provide a somewhat better representation of the datapoints.
+Indeed, by collapsing nodes 4 and 5, we get a more non-linear curve, which seems to provide a somewhat better representation of the datapoints.
 
 GAM-based recursive partition with global effects
 -------------------------------------------------
 
-We use function `gamertree()` to fit the same tree as above (specified through the `tree_form` argument), as well as a global model. The global model is specified through the second `gam_form` argument, which is `NULL` by default, indicating that there are only local parameters to be estimated. Here, we supply the `noise` and `cluster_id` variables to the global model. These are noise variables, so these should not have significant or substantial effects. They merely serve to illustrate specification of the global model. We specify `noise` as having a parametric (i.e., linear) effect. We specify `cluster_id` as an indicator for a random intercept term (which can be done through function `s()` and specifying `bs = "re"`).
+We now use function `gamertree()` to fit the same tree as above (specified through the `tree_form` argument), but now while also estimating and accounting for a global model. The global model is specified through the second `gam_form` argument, which is `NULL` by default, indicating that there are only local parameters to be estimated. Here, we supply the `noise` and `cluster_id` variables to the global model. These are noise variables, so these should not have significant or substantial effects. They merely serve to illustrate specification of the global model. We specify `noise` as having a parametric (i.e., linear) effect. We specify `cluster_id` as an indicator for a random intercept term (which can be done through function `s()` and specifying `bs = "re"`).
 
-Again, we have to use the `s_ctrl` argument to pass the `k` argument to function `s()` used in the partitioning. Note also that the arguments for the global model are specified in the formula directly, as is customary for the `gam()` function:
+Again, we have to use the `s_ctrl` argument to pass the `k` argument to function `s()` used in the partitioning. Note also that the arguments for the global model are specified in the formula directly, as is customary for the `gam()` function. Note also that for the global model, both smooth and parametric terms may be specified. For the local model, only smooth terms can (currently) be employed.
 
 ``` r
 gt4 <- gamtree(tree_form = Pn ~ PAR | Species, 
@@ -156,7 +165,9 @@ gt4$iterations
 #> [1] 2
 ```
 
-Estimation converged in two iterations. Probably because accounting for the global effects has little effect for these data, as specified predictors for the global model are in fact noise variables. We can obtain test statistics for the significance of the global and local effects in the full GAM as follows:
+Estimation converged in two iterations. Probably because accounting for the global effects has little effect for these data, as the predictors for the global model are in fact noise variables. We can obtain test statistics for the significance of the global and local effects in the full GAM as follows:
+
+### Assessing the significance of smooth and parametric terms
 
 ``` r
 summary(gt4$gamm) 
@@ -192,7 +203,7 @@ summary(gt4$gamm)
 #> -REML = 1010.4  Scale est. = 1.3293    n = 628
 ```
 
-Note that the standard errors and degrees of freedom do not account for the searching of the tree structure and are therefore likely too low, yielding overly optimistic (i.e., too low) *p* values.
+Note that the standard errors and degrees of freedom for the smooth and parametric terms in the terminal nodes (i.e., those terms with the `.tree` in them) do not account for the searching of the tree structure and are therefore likely too low (overly optimistic), yielding too low *p* values.
 
 The effect of the smooths is significant in every terminal tree node. As expected, the global fixed and random effects are not significant. We will probably also see this in their estimated random-effects coefficients being close to zero:
 
@@ -229,13 +240,13 @@ We can plot the tree and the models fitted in each of the terminal nodes:
 plot(gt4, which = "tree", gp = gpar(cex = .7))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-15-1.png)
+![](inst/README-figures/README-unnamed-chunk-16-1.png)
 
 ``` r
 plot(gt4, which = "nodes")
 ```
 
-![](inst/README-figures/README-unnamed-chunk-15-2.png)
+![](inst/README-figures/README-unnamed-chunk-16-2.png)
 
 Again, we check whether the sums of the observation-wise gradient contributions are reasonably close to zero:
 
@@ -256,7 +267,7 @@ All observation-wise gradient contributions sum to values reasonably close to 0.
 Specifying multiple predictor variables for the node-specific GAMs
 ------------------------------------------------------------------
 
-Multiple predictor variables can be specified for the node-specific model. Note that for the node-specific model, currently only smooth function can be specified; parametric terms are not supported (yet). Specifying a large number of smooth functions for the node-specific models is probably not a good idea; it will yield results which are difficult to interpret and possibly unstable, or one or more errors.
+Multiple predictor variables can be specified for the node-specific model. Note that for the node-specific model, currently only smooth function can be specified; parametric terms are not supported (yet). Specifying a large number of smooth functions for the node-specific models is probably not a good idea; it will yield results which are difficult to interpret (because of the large number of coefficients) and possibly unstable, or one or more errors. The higher the complexity (i.e., the higher the df for the smooth term, the higher the number of predictor variables) of the node-specific model, the more likely that one or more spurious subgroups will be detected.
 
 ### Single smooth term with multiple predictor variables
 
@@ -349,20 +360,20 @@ summary(gt6$gamm)
 #> 
 #> R-sq.(adj) =  0.564   Deviance explained = 58.2%
 #> -REML = 1013.1  Scale est. = 1.3293    n = 628
-coef(gt6$tree)
-#>   (Intercept)  s(PAR).1   s(PAR).2 s(PAR).3 s(PAR).4    s(noise).1
-#> 3    3.234900  1.065684   3.683415 3.174986 1.560575  3.566699e-05
-#> 4    3.980515 -2.341694   8.187016 6.544066 3.650087  9.304479e-02
-#> 6    4.871948  1.470086  -5.119634 4.418296 3.439205  9.393597e-06
-#> 7    5.202619 -4.041787 -11.969899 9.970974 6.362578 -7.034408e-06
-#>      s(noise).2    s(noise).3  s(noise).4
-#> 3  5.853175e-05  4.120733e-04 -0.11055632
-#> 4 -6.620321e-02  2.809929e-01  0.09203265
-#> 6 -2.306391e-06 -1.037433e-05  0.03894643
-#> 7  1.185359e-05 -7.035602e-05 -0.05489157
+coef(gt6)
+#>   (Intercept)      s(PAR).1      s(PAR).2      s(PAR).3   s(PAR).4
+#> 3    3.218384 -8.166839e-01 -2.488543e+00  2.344719e+00  1.2967829
+#> 4    4.034395 -1.685025e+00 -3.587925e+00  3.219624e+00  2.9580629
+#> 6    4.703957 -3.357547e-06  1.130255e-05  1.639038e-04 -0.1058827
+#> 7    5.209090 -1.281079e-05  5.052262e-06 -3.637538e-05  0.0316039
+#>      s(noise).1    s(noise).2    s(noise).3  s(noise).4
+#> 3 -2.293770e+00 -8.272536e+00  6.6960687214  3.68462374
+#> 4 -4.151161e+00 -1.308307e+01 10.7695298267  6.40490175
+#> 6  6.117589e-02  3.571054e-02  0.2036688912  0.07144024
+#> 7  4.323274e-05 -4.141037e-05 -0.0003098126 -0.05972293
 ```
 
-If multiple smooth terms are specified, and they should have different arguments for the smooth function, a `list` composed of `n_FUN` lists should be supplied to the `s_ctrl` argument. For example, if we want to specify a different dimension of the basis used to represent the smooth terms for the `PAR` and `noise` variables (i.e., different values for `k`), we specify a `list` containing separate lists of control arguments for the smooth functions. E.g.:
+In `gt6`, the same value of `k` was used for both predictors, as only one value was specified. If multiple smooth terms are specified, and different arguments should be employed for fitting their smooth functions, a `list` composed of `n_FUN` lists should be supplied to the `s_ctrl` argument. For example, if we want to specify different values of `k` for the smooth terms of the `PAR` and `noise` variables, we specify a `list` containing separate lists of control arguments for the smooth functions. These sublists should have the order in which the predictors for the node-specific models are supplied in the `tree_form`. E.g.:
 
 ``` r
 gt7 <- gamtree(tree_form = Pn ~ PAR + noise | Species, 
@@ -405,17 +416,6 @@ summary(gt7$gamm)
 #> 
 #> R-sq.(adj) =  0.563   Deviance explained = 58.2%
 #> -REML = 1013.1  Scale est. = 1.3293    n = 628
-coef(gt7$tree)
-#>   (Intercept)  s(PAR).1   s(PAR).2 s(PAR).3 s(PAR).4    s(noise).1
-#> 3    3.234908  1.065661   3.682954 3.174655 1.560526  3.566047e-05
-#> 4    3.980516 -2.340168   8.183155 6.542260 3.648218 -1.001589e-01
-#> 6    4.871956  1.470128  -5.119527 4.418196 3.439237  1.336767e-05
-#> 7    5.202623 -4.041689 -11.969820 9.970947 6.362488 -9.887474e-06
-#>      s(noise).2  s(noise).3
-#> 3  4.039594e-04 -0.11054537
-#> 4  2.525822e-01  0.10007060
-#> 6 -3.071983e-05  0.03894294
-#> 7 -9.661188e-05 -0.05489722
 coef(gt7)
 #>   (Intercept)    s(PAR).1      s(PAR).2      s(PAR).3     s(PAR).4
 #> 3    3.218393 -0.81663949 -2.488026e+00  2.344355e+00 1.2967003073
@@ -427,41 +427,9 @@ coef(gt7)
 #> 4  2.958042e+00 -4.1510617904 -13.08310081
 #> 6 -1.058721e-01  0.0739608607   0.13584806
 #> 7  6.819311e-05 -0.0004910158  -0.05972269
-gt7$gamm_form
-#> Pn ~ .tree + s(PAR, k = 5, by = .tree) + s(noise, k = 4, by = .tree) + 
-#>     s(cluster_id, bs = "re") - 1
-coef(gt7$gamm)
-#>            .tree3            .tree4            .tree6            .tree7 
-#>      3.218393e+00      4.034637e+00      4.703963e+00      5.209097e+00 
-#>   s(PAR):.tree3.1   s(PAR):.tree3.2   s(PAR):.tree3.3   s(PAR):.tree3.4 
-#>     -8.166395e-01     -2.488026e+00      2.344355e+00      1.296700e+00 
-#>   s(PAR):.tree4.1   s(PAR):.tree4.2   s(PAR):.tree4.3   s(PAR):.tree4.4 
-#>     -2.293427e+00     -8.278454e+00      6.700252e+00      3.684840e+00 
-#>   s(PAR):.tree6.1   s(PAR):.tree6.2   s(PAR):.tree6.3   s(PAR):.tree6.4 
-#>     -1.685012e+00     -3.587683e+00      3.219435e+00      2.958042e+00 
-#>   s(PAR):.tree7.1   s(PAR):.tree7.2   s(PAR):.tree7.3   s(PAR):.tree7.4 
-#>     -4.151062e+00     -1.308310e+01      1.076957e+01      6.404830e+00 
-#> s(noise):.tree3.1 s(noise):.tree3.2 s(noise):.tree3.3 s(noise):.tree4.1 
-#>     -4.793093e-06      1.495877e-04     -1.058721e-01      7.396086e-02 
-#> s(noise):.tree4.2 s(noise):.tree4.3 s(noise):.tree6.1 s(noise):.tree6.2 
-#>      1.358481e-01      7.734186e-02     -1.530996e-05     -1.160859e-04 
-#> s(noise):.tree6.3 s(noise):.tree7.1 s(noise):.tree7.2 s(noise):.tree7.3 
-#>      3.159281e-02      6.819311e-05     -4.910158e-04     -5.972269e-02 
-#>   s(cluster_id).1   s(cluster_id).2   s(cluster_id).3   s(cluster_id).4 
-#>     -2.783844e-02      4.231937e-02      1.569496e-02     -4.170378e-02 
-#>   s(cluster_id).5   s(cluster_id).6   s(cluster_id).7   s(cluster_id).8 
-#>     -5.754349e-02      6.049388e-02      3.862680e-02     -1.055243e-01 
-#>   s(cluster_id).9  s(cluster_id).10  s(cluster_id).11  s(cluster_id).12 
-#>      7.188221e-02     -6.188331e-02      5.242605e-02      4.108253e-02 
-#>  s(cluster_id).13  s(cluster_id).14  s(cluster_id).15  s(cluster_id).16 
-#>      5.115518e-02     -1.292361e-01      8.005598e-02     -3.667977e-02 
-#>  s(cluster_id).17  s(cluster_id).18  s(cluster_id).19  s(cluster_id).20 
-#>      1.015967e-01      6.729288e-02     -1.031608e-01     -5.027464e-02 
-#>  s(cluster_id).21 
-#>     -8.781848e-03
-gt7$tree_form
-#> Pn ~ PAR + noise | Species
 ```
+
+We see that for `PAR`, ($k - 1 = $) 4 coefficients were estimated, and for \`noise\`, ($k -1 =$) 3 coefficients were estimated.
 
 ### Using smooth functions other than `s()`
 
@@ -653,14 +621,14 @@ coef(gt4$tree)
 plot(gt4, which = "nodes")
 ```
 
-![](inst/README-figures/README-unnamed-chunk-22-1.png)
+![](inst/README-figures/README-unnamed-chunk-23-1.png)
 
 ``` r
 par(mfrow = c(2, 3))
 plot(gt4$gamm)
 ```
 
-![](inst/README-figures/README-unnamed-chunk-23-1.png)
+![](inst/README-figures/README-unnamed-chunk-24-1.png)
 
 The plots also indicate very similar, but not identical effects.
 
@@ -695,7 +663,7 @@ sapply(preds, min)
 plot(preds)
 ```
 
-![](inst/README-figures/README-unnamed-chunk-24-1.png)
+![](inst/README-figures/README-unnamed-chunk-25-1.png)
 
 The predicted values seem very similar, but not the same.
 
@@ -732,14 +700,14 @@ coef(gt1$tree)
 plot(gt1, which = "nodes")
 ```
 
-![](inst/README-figures/README-unnamed-chunk-26-1.png)
+![](inst/README-figures/README-unnamed-chunk-27-1.png)
 
 ``` r
 par(mfrow = c(2, 2))
 plot(gt1$gamm)
 ```
 
-![](inst/README-figures/README-unnamed-chunk-27-1.png)
+![](inst/README-figures/README-unnamed-chunk-28-1.png)
 
 ``` r
 preds <- data.frame(gamtree = predict(gt1),
@@ -766,4 +734,4 @@ sapply(preds, min)
 plot(preds)
 ```
 
-![](inst/README-figures/README-unnamed-chunk-28-1.png)
+![](inst/README-figures/README-unnamed-chunk-29-1.png)
