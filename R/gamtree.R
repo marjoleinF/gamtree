@@ -1,4 +1,19 @@
-utils::globalVariables(c(".tree", ".global"))
+utils::globalVariables(c(".tree", ".global", ".weights", ".cluster"))
+
+## From mob() documentation:
+##
+## All tests also require an estimate of the corresponding variance-covariance
+## matrix of the estimating functions. The default is to compute this using an  
+## outer-product-of-gradients (OPG) estimator. Alternatively, the corrsponding  
+## information matrix or sandwich matrix can be used if: (a) the estimating  
+## functions are actually maximum likelihood scores, and (b) a vcov() method
+## (based on an estimate of the information) is provided for the fitted model 
+## objects. The corresponding option in mob_control() is to set vcov ="info" 
+## or vcov="sandwich"rather than vcov="opg" (the default).
+##
+## mgcv supplies a vcov.gam method, so condition b) is met, but unclear if a) 
+## is met.
+
 
 
 #' Recursively partition a dataset based on a (local) GAM, while accounting for 
@@ -25,6 +40,12 @@ utils::globalVariables(c(".tree", ".global"))
 #' \code{gam()}. If \code{NULL}, no global (only local) parameters will be 
 #' estimated.
 #' @param data specifies the dataset (must be a data.frame).
+#' @param weights optional numeric vector of case weights.
+#' @param cluster optional numeric or factor vector with a cluster ID to be 
+#' passed employed for clustered covariances in the parameter stability tests.
+#' @param offset numeric vector with an a priori known component to be included
+#' in the model \code{y ~ x1 + x2 + ....}. Will be applied to both the local
+#' and global model and will not be updated in consecutive iterations. 
 #' @param abstol specifies the convergence criterion. If the log-likelihood 
 #' values of the full mixed-effects gam, from two consecutive iterations differ 
 #' less than abstol, estimation is halted.
@@ -32,6 +53,8 @@ utils::globalVariables(c(".tree", ".global"))
 #' every iteration? If true, the iteration number, information on the 
 #' splitting procedure, and the log-likelihood (with df) value of the fitted 
 #' full mixed-effects gam model is printed.
+#' @param method The smoothing parameter estimation method used by \code{gam()}.
+#' See documentation of function \code{gam()} for details.
 #' @param mob_ctrl a list with control parameters as returned by \code{mob_control}
 #' to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
 #' `data.frame`, by default, and cannot be adjusted.)
@@ -39,18 +62,26 @@ utils::globalVariables(c(".tree", ".global"))
 #' fitted \code{s()} function. If \code{NULL}, the default arguments of 
 #' function \code{s()} will be employed. NOTE: argument \code{by} cannot be
 #' specified, as \code{gamtreee} requires the use of this argument.
-#' @param ... additional arguments to be passed to \code{mob()}'s fitting 
-#' function (currently, the only option is the default \code{gam_fit()}).
+#' @param ... additional arguments to be passed the locally fitted \code{gam}s
+#' , through \code{mob()}'s fitting function (currently, the only option is the 
+#' default \code{gam_fit()}).
 #' 
 #' @return Returns an object of class \code{"gamtree"}. This is a list, containing
 #' (amongst others) the GAM-based recursive partition (in \code{$tree}), and the 
 #' fitted full GAM with both local and/or global fitted effects (in \code{$gamm}). 
 #' 
+#' @examples
+#' gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
+#'               s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+#' summary(gt)
+#' 
 #' @import mgcv partykit
 #' @importFrom stats as.formula formula logLik predict update
 #' @export
-gamtree <- function(tree_form, gam_form = NULL, data, abstol = 0.001, 
-                    verbose = TRUE, mob_ctrl = NULL, s_ctrl = NULL, ...) {
+gamtree <- function(tree_form, gam_form = NULL, data, weights = NULL,
+                    cluster = NULL, offset = NULL, abstol = 0.001, 
+                    verbose = TRUE, method = "REML", s_ctrl = NULL, 
+                    mob_ctrl = NULL, ...) {
   
   if (!is.null(s_ctrl)) {
     if (is.list(s_ctrl)) {
@@ -61,6 +92,9 @@ gamtree <- function(tree_form, gam_form = NULL, data, abstol = 0.001,
       warning("Argument s_ctrl should be a list or NULL.")
     }
   }
+  
+  data$.weights <- if (is.null(weights)) 1 else weights
+  if (!is.null(cluster)) data$.cluster <- cluster
   
   if (is.null(mob_ctrl)) {
     mob_ctrl <- mob_control(verbose = verbose, xtype = "data.frame")
@@ -163,29 +197,41 @@ gamtree <- function(tree_form, gam_form = NULL, data, abstol = 0.001,
   cl <- match.call()
   
   ## initialization
+  data$.offset <- if (is.null(offset)) 0 else offset
   data$.global <- 0
   newloglik <- -Inf
   oldloglik <- c(-Inf, -Inf) # last element is the oldest
   iteration <- 0L
   continue <- TRUE
   
-  ## iterate between lmer and lmtree estimation
+  ## iterate between tree and global model estimation
   while (continue) {
     
     iteration <- iteration + 1L
     if (verbose) print(paste("iteration", iteration))
     
+    if (!is.null(offset)) data$.global <- data$.global + offset
+    
     ## Grow tree and get node memberships:
-    tree <- mob(tree_form, data = data, mob_gam_rhs = mob_gam_rhs, 
-                fit = gam_fit, method = "REML", offset = .global, 
-                control = mob_ctrl, ...) 
+    if (is.null(cluster)) {
+      tree <- mob(tree_form, data = data, mob_gam_rhs = mob_gam_rhs, 
+                  fit = gam_fit, method = method, weights = .weights,
+                  offset = .global, control = mob_ctrl, ...)   
+    } else {
+      tree <- mob(tree_form, data = data, mob_gam_rhs = mob_gam_rhs, 
+                  fit = gam_fit, method = method, weights = .weights,
+                  offset = .global, control = mob_ctrl, cluster = .cluster, 
+                  ...)       
+    }
     data$.tree <- factor(predict(tree, newdata = data, type = "node"))
     
     ## Fit gam with global and local models:
     if (length(tree) > 1L) {
-      gamm <- gam(gamm_form, data = data, method = "REML")
+      gamm <- gam(gamm_form, data = data, method = method, weights = .weights,
+                  offset = .offset)
     } else {
-      gamm <- gam(gamm_form_alt, data = data, method = "REML")
+      gamm <- gam(gamm_form_alt, data = data, method = method, weights = .weights,
+                  offset = .offset)
     }
     
     ## Obtain predictions of global model only:
@@ -275,6 +321,18 @@ gam_fit <- function(y, x, start = NULL, weights = NULL,
 
 
 
+#' Summary for a fitted GAM tree
+#' 
+#' Prints a summary of the local and/or global terms in a fitted GAM tree.  
+#'
+#' @param object object of class \code{gamtree}.
+#' @param ... further arguments to be passed to \code{summary.gam}.
+#' @export
+summary.gamtree <- function(object, ...) {
+  summary(object$gamm, ...)
+}
+
+
 
 #' Plotting of GAM trees
 #' 
@@ -290,16 +348,20 @@ gam_fit <- function(y, x, start = NULL, weights = NULL,
 #' the \code{tp_args} argument of \code{plot.party}.  
 #' @param ... arguments to be passed to \code{plot.gam}.
 #' 
+#' @examples 
+#' gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
+#'               s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+#' plot(gt, which = "tree") # fdefault is which = 'both'
+#' plot(gt, which = "nodes", residuals = TRUE)
+#' 
 #' @importFrom graphics plot par
 #' @export
-plot.gamtree <- function(x, which = "both", 
-                         tp_args = list(fitmean = FALSE),
-                         ...) {
+plot.gamtree <- function(x, which = "both", ...) {
   ## TODO: allow for passing arguments both to plot.gam and plot.party
   ## TODO: allow for plotting local (current default) and global smooths 
   if (which != "nodes") {
     ## Plot observed data in terminal nodes:
-    plot(x$tree, terminal_panel = node_bivplot, tp_args = tp_args, ...)
+    plot(x$tree, terminal_panel = node_bivplot, ...)
   }
   if (which != "tree") {
     ## Plot models in terminal nodes:

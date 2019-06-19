@@ -3,6 +3,7 @@
 S3method(coef,gamtree)
 S3method(plot,gamtree)
 S3method(predict,gamtree)
+S3method(summary,gamtree)
 export(check_grad)
 export(gamtree)
 import(mgcv)

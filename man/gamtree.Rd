@@ -5,8 +5,9 @@
 \title{Recursively partition a dataset based on a (local) GAM, while accounting for 
 globally specified GAM terms.}
 \usage{
-gamtree(tree_form, gam_form = NULL, data, abstol = 0.001,
-  verbose = TRUE, mob_ctrl = NULL, s_ctrl = NULL, ...)
+gamtree(tree_form, gam_form = NULL, data, weights = NULL,
+  cluster = NULL, offset = NULL, abstol = 0.001, verbose = TRUE,
+  method = "REML", s_ctrl = NULL, mob_ctrl = NULL, ...)
 }
 \arguments{
 \item{tree_form}{specifies the response and predictor variable for the 
@@ -28,6 +29,15 @@ estimated.}
 
 \item{data}{specifies the dataset (must be a data.frame).}
 
+\item{weights}{optional numeric vector of case weights.}
+
+\item{cluster}{optional numeric or factor vector with a cluster ID to be 
+passed employed for clustered covariances in the parameter stability tests.}
+
+\item{offset}{numeric vector with an a priori known component to be included
+in the model \code{y ~ x1 + x2 + ....}. Will be applied to both the local
+and global model and will not be updated in consecutive iterations.}
+
 \item{abstol}{specifies the convergence criterion. If the log-likelihood 
 values of the full mixed-effects gam, from two consecutive iterations differ 
 less than abstol, estimation is halted.}
@@ -37,17 +47,21 @@ every iteration? If true, the iteration number, information on the
 splitting procedure, and the log-likelihood (with df) value of the fitted 
 full mixed-effects gam model is printed.}
 
-\item{mob_ctrl}{a list with control parameters as returned by \code{mob_control}
-to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
-`data.frame`, by default, and cannot be adjusted.)}
+\item{method}{The smoothing parameter estimation method used by \code{gam()}.
+See documentation of function \code{gam()} for details.}
 
 \item{s_ctrl}{a list of arguments to be passed to the locally
 fitted \code{s()} function. If \code{NULL}, the default arguments of 
 function \code{s()} will be employed. NOTE: argument \code{by} cannot be
 specified, as \code{gamtreee} requires the use of this argument.}
 
-\item{...}{additional arguments to be passed to \code{mob()}'s fitting 
-function (currently, the only option is the default \code{gam_fit()}).}
+\item{mob_ctrl}{a list with control parameters as returned by \code{mob_control}
+to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
+`data.frame`, by default, and cannot be adjusted.)}
+
+\item{...}{additional arguments to be passed the locally fitted \code{gam}s
+, through \code{mob()}'s fitting function (currently, the only option is the 
+default \code{gam_fit()}).}
 }
 \value{
 Returns an object of class \code{"gamtree"}. This is a list, containing
@@ -59,4 +73,10 @@ fitted full GAM with both local and/or global fitted effects (in \code{$gamm}).
 which a smooth function (thin plate regression spline) of a single predictor
 variable is estimated, while accounting for globally specified smooth 
 functions and random effects.
+}
+\examples{
+gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
+              s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+summary(gt)
+
 }

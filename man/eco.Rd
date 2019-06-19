@@ -23,6 +23,7 @@ categorical indicator for a random intercept).
   \item cluster_id: categorical covariate; indicator for a random intercept
   term (noise).
   \item noise: continuous covariate (noise).
+  \item specimen:  number of individual plant.
 }
 }
 \examples{
