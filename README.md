@@ -96,9 +96,9 @@ gam.check(gt1$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                 k'  edf k-index p-value  
-#> s(PAR):.tree2 9.00 7.14    0.93   0.035 *
-#> s(PAR):.tree4 9.00 3.83    0.93   0.040 *
-#> s(PAR):.tree5 9.00 6.82    0.93   0.015 *
+#> s(PAR):.tree2 9.00 7.14    0.93    0.03 *
+#> s(PAR):.tree4 9.00 3.83    0.93    0.05 *
+#> s(PAR):.tree5 9.00 6.82    0.93    0.02 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -132,9 +132,9 @@ gam.check(gt2$gamm)
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                  k'   edf k-index p-value  
-#> s(PAR):.tree2 17.00  7.73    0.92   0.035 *
-#> s(PAR):.tree3 17.00  6.58    0.92   0.030 *
+#>                  k'   edf k-index p-value   
+#> s(PAR):.tree2 17.00  7.73    0.92   0.015 * 
+#> s(PAR):.tree3 17.00  6.58    0.92   0.010 **
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -203,16 +203,10 @@ Using the `coef` method we can print the coefficients from the terminal nodes:
 
 ``` r
 coef(gt3)
-#> Warning in coef.gamtree(gt3): No splits were made in the tree. All
-#> estimated coefficients are global and all will be returned.
-#>          .tree2          .tree4          .tree5 s(PAR):.tree2.1 
-#>        3.701622        4.709980        5.198775       -1.919938 
-#> s(PAR):.tree2.2 s(PAR):.tree2.3 s(PAR):.tree2.4 s(PAR):.tree4.1 
-#>       -7.354504        5.872871        3.046255       -1.432097 
-#> s(PAR):.tree4.2 s(PAR):.tree4.3 s(PAR):.tree4.4 s(PAR):.tree5.1 
-#>       -2.737333        2.712305        2.638366       -4.155897 
-#> s(PAR):.tree5.2 s(PAR):.tree5.3 s(PAR):.tree5.4 
-#>      -12.830898       10.650817        6.385477
+#>   (Intercept)  s(PAR).1   s(PAR).2  s(PAR).3 s(PAR).4
+#> 2    3.701622 -1.919938  -7.354504  5.872871 3.046255
+#> 4    4.709980 -1.432097  -2.737333  2.712305 2.638366
+#> 5    5.198775 -4.155897 -12.830898 10.650817 6.385477
 ```
 
 We can do an additional check on the observation-level contributions to the gradient. These should sum to (a value close to) zero. We can do this using the `check_grad()` function. It computes the sum of the observation-wise contributions to the gradient. These sums should be reasonably close to zero:
@@ -245,7 +239,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 We inspect the result:
 
 ``` r
-plot(gt4, which = "tree", treeplot_ctrl = list(gpar(cex = .7)))
+plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-15-1.png)
@@ -320,28 +314,18 @@ The effect of the local smooths are significant in every terminal tree node. As 
 
 ``` r
 coef(gt5, which = 'global')
-#> Warning in coef.gamtree(gt5, which = "global"): No splits were made in the
-#> tree. All estimated coefficients are global and all will be returned.
-#>           .tree2           .tree4           .tree5            noise 
-#>      3.703916733      4.706336764      5.203145323     -0.003278629 
-#>  s(PAR):.tree2.1  s(PAR):.tree2.2  s(PAR):.tree2.3  s(PAR):.tree2.4 
-#>     -1.931527589     -7.317267266      5.858086120      3.052828617 
-#>  s(PAR):.tree4.1  s(PAR):.tree4.2  s(PAR):.tree4.3  s(PAR):.tree4.4 
-#>     -1.498927224     -2.958604740      2.829857995      2.725435293 
-#>  s(PAR):.tree5.1  s(PAR):.tree5.2  s(PAR):.tree5.3  s(PAR):.tree5.4 
-#>     -4.159471168    -12.730338735     10.560748971      6.384956103 
-#>  s(cluster_id).1  s(cluster_id).2  s(cluster_id).3  s(cluster_id).4 
-#>     -0.016018375      0.021554872     -0.005823459     -0.037632877 
-#>  s(cluster_id).5  s(cluster_id).6  s(cluster_id).7  s(cluster_id).8 
-#>     -0.071342320      0.025347130      0.021646130     -0.083477045 
-#>  s(cluster_id).9 s(cluster_id).10 s(cluster_id).11 s(cluster_id).12 
-#>      0.065526535     -0.031547373      0.033627088      0.026420746 
-#> s(cluster_id).13 s(cluster_id).14 s(cluster_id).15 s(cluster_id).16 
-#>      0.014224768     -0.074945318      0.084829151     -0.034177210 
-#> s(cluster_id).17 s(cluster_id).18 s(cluster_id).19 s(cluster_id).20 
-#>      0.094284254      0.050139000     -0.059608275      0.001995594 
-#> s(cluster_id).21 
-#>     -0.025023015
+#>            noise  s(cluster_id).1  s(cluster_id).2  s(cluster_id).3 
+#>     -0.003278629     -0.016018375      0.021554872     -0.005823459 
+#>  s(cluster_id).4  s(cluster_id).5  s(cluster_id).6  s(cluster_id).7 
+#>     -0.037632877     -0.071342320      0.025347130      0.021646130 
+#>  s(cluster_id).8  s(cluster_id).9 s(cluster_id).10 s(cluster_id).11 
+#>     -0.083477045      0.065526535     -0.031547373      0.033627088 
+#> s(cluster_id).12 s(cluster_id).13 s(cluster_id).14 s(cluster_id).15 
+#>      0.026420746      0.014224768     -0.074945318      0.084829151 
+#> s(cluster_id).16 s(cluster_id).17 s(cluster_id).18 s(cluster_id).19 
+#>     -0.034177210      0.094284254      0.050139000     -0.059608275 
+#> s(cluster_id).20 s(cluster_id).21 
+#>      0.001995594     -0.025023015
 ```
 
 Note that by default, the `coef` method returns the local estimates, but we can obtain the global coefficient estimates by specifying the `which` argument.
@@ -418,37 +402,6 @@ summary(gt6)
 #> 
 #> R-sq.(adj) =  0.519   Deviance explained = 53.7%
 #> -REML = 1036.8  Scale est. = 1.4654    n = 628
-coef(gt6)
-#> Warning in coef.gamtree(gt6): No splits were made in the tree. All
-#> estimated coefficients are global and all will be returned.
-#>                .tree2                .tree4                .tree6 
-#>            3.54108300            4.15776421            4.70105009 
-#>                .tree7 s(PAR,noise):.tree2.1 s(PAR,noise):.tree2.2 
-#>            5.21289873           -6.26442266           11.17672201 
-#> s(PAR,noise):.tree2.3 s(PAR,noise):.tree2.4 s(PAR,noise):.tree4.1 
-#>            1.17096998            0.00825335           -7.28707167 
-#> s(PAR,noise):.tree4.2 s(PAR,noise):.tree4.3 s(PAR,noise):.tree4.4 
-#>           14.28711039            1.55598319           -0.01029278 
-#> s(PAR,noise):.tree6.1 s(PAR,noise):.tree6.2 s(PAR,noise):.tree6.3 
-#>           -5.97427580           10.41585569            1.68666359 
-#> s(PAR,noise):.tree6.4 s(PAR,noise):.tree7.1 s(PAR,noise):.tree7.2 
-#>            0.03156054          -14.84119253           26.35624391 
-#> s(PAR,noise):.tree7.3 s(PAR,noise):.tree7.4       s(cluster_id).1 
-#>            2.92410313           -0.01886908           -0.03182690 
-#>       s(cluster_id).2       s(cluster_id).3       s(cluster_id).4 
-#>            0.02860842           -0.02116024           -0.03853908 
-#>       s(cluster_id).5       s(cluster_id).6       s(cluster_id).7 
-#>           -0.06737392            0.05825868            0.03281082 
-#>       s(cluster_id).8       s(cluster_id).9      s(cluster_id).10 
-#>           -0.11369343            0.10269394           -0.06994979 
-#>      s(cluster_id).11      s(cluster_id).12      s(cluster_id).13 
-#>            0.04600924            0.03694796            0.01585890 
-#>      s(cluster_id).14      s(cluster_id).15      s(cluster_id).16 
-#>           -0.09745560            0.11509347           -0.07529673 
-#>      s(cluster_id).17      s(cluster_id).18      s(cluster_id).19 
-#>            0.16236409            0.06257804           -0.09408719 
-#>      s(cluster_id).20      s(cluster_id).21 
-#>           -0.01747437           -0.03436632
 ```
 
 Alternatively, multiple separate local smooth terms will be estimated if `n_FUN` argument is specified (which equals `1L`, by default):
@@ -458,7 +411,7 @@ gt7 <- gamtree(tree_form = Pn ~ PAR + noise | Species,
                gam_form = Pn ~ s(cluster_id, bs = "re"),
                data = eco, verbose = FALSE, s_ctrl = list(k = 5L),  
                cluster = eco$specimen, n_FUN = 2L)
-summary(gt7$gamm)
+summary(gt7)
 #> 
 #> Family: gaussian 
 #> Link function: identity 
@@ -482,11 +435,6 @@ summary(gt7$gamm)
 #> 
 #> R-sq.(adj) =  0.359   Deviance explained = 36.9%
 #> -REML = 1114.8  Scale est. = 1.9519    n = 628
-coef(gt7$tree)
-#>   (Intercept)      s(PAR).1      s(PAR).2      s(PAR).3      s(PAR).4 
-#>  4.131964e+00 -2.306152e-06 -7.905845e-06  6.180318e-06  2.835229e-06 
-#>    s(noise).1    s(noise).2    s(noise).3    s(noise).4 
-#>  7.886990e-06 -1.048573e-06  1.404181e-05  7.011648e-06
 ```
 
 In this case, no subgroups were created. Adding a smooth for a noise variable may have reduced the power to detect group differences.
@@ -502,7 +450,7 @@ gt8 <- gamtree(tree_form = Pn ~ PAR + noise | Species,
                s_ctrl = list(list(k = 5L), list(k = 3L)),  
                mob_ctrl = mob_control(alpha = .25),
                cluster = eco$specimen, n_FUN = 2L)
-summary(gt8$gamm)
+summary(gt8)
 #> 
 #> Family: gaussian 
 #> Link function: identity 
@@ -599,16 +547,10 @@ The estimated coefficients from the final tree use the predictions based on glob
 
 ``` r
 coef(gt3)
-#> Warning in coef.gamtree(gt3): No splits were made in the tree. All
-#> estimated coefficients are global and all will be returned.
-#>          .tree2          .tree4          .tree5 s(PAR):.tree2.1 
-#>        3.701622        4.709980        5.198775       -1.919938 
-#> s(PAR):.tree2.2 s(PAR):.tree2.3 s(PAR):.tree2.4 s(PAR):.tree4.1 
-#>       -7.354504        5.872871        3.046255       -1.432097 
-#> s(PAR):.tree4.2 s(PAR):.tree4.3 s(PAR):.tree4.4 s(PAR):.tree5.1 
-#>       -2.737333        2.712305        2.638366       -4.155897 
-#> s(PAR):.tree5.2 s(PAR):.tree5.3 s(PAR):.tree5.4 
-#>      -12.830898       10.650817        6.385477
+#>   (Intercept)  s(PAR).1   s(PAR).2  s(PAR).3 s(PAR).4
+#> 2    3.701622 -1.919938  -7.354504  5.872871 3.046255
+#> 4    4.709980 -1.432097  -2.737333  2.712305 2.638366
+#> 5    5.198775 -4.155897 -12.830898 10.650817 6.385477
 coef(gt3$tree)
 #>   (Intercept)  s(PAR).1   s(PAR).2 s(PAR).3 s(PAR).4
 #> 2    3.680405 -2.053585  -7.294140 5.819719 3.018558

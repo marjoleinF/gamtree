@@ -156,7 +156,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 We inspect the result:
 
 ```{r}
-plot(gt4, which = "tree", treeplot_ctrl = list(gpar(cex = .7)))
+plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
 
@@ -235,7 +235,6 @@ gt6 <- gamtree(tree_form = Pn ~ PAR + noise | Species,
                data = eco, verbose = FALSE, cluster = eco$specimen,
                s_ctrl = list(k = 5L))
 summary(gt6)
-coef(gt6)
 ```
 
 Alternatively, multiple separate local smooth terms will be estimated if `n_FUN` argument is specified (which equals `1L`, by default):
@@ -245,8 +244,7 @@ gt7 <- gamtree(tree_form = Pn ~ PAR + noise | Species,
                gam_form = Pn ~ s(cluster_id, bs = "re"),
                data = eco, verbose = FALSE, s_ctrl = list(k = 5L),  
                cluster = eco$specimen, n_FUN = 2L)
-summary(gt7$gamm)
-coef(gt7$tree)
+summary(gt7)
 ```
 
 In this case, no subgroups were created. Adding a smooth for a noise variable may have reduced the power to detect group differences.
@@ -262,7 +260,7 @@ gt8 <- gamtree(tree_form = Pn ~ PAR + noise | Species,
                s_ctrl = list(list(k = 5L), list(k = 3L)),  
                mob_ctrl = mob_control(alpha = .25),
                cluster = eco$specimen, n_FUN = 2L)
-summary(gt8$gamm)
+summary(gt8)
 ```
 
 We see that for `PAR`, a higher `edf` value was obtained than for `noise`, which is what would be expected for a true predictor versus a noise variable.

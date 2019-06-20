@@ -406,7 +406,7 @@ plot.gamtree <- function(x, which = "both", treeplot_ctrl = list(),
 #' @importFrom stats coef
 coef.gamtree <- function(object, which = "local", ...) {
   coefs <- object$gamm$coefficients
-  if (all(!grepl(".tree", coefs))) {
+  if (all(!grepl(".tree", names(coefs)))) {
     warning("No splits were made in the tree. All estimated coefficients are global and all will be returned.")
   } else {
     local_coef_ids <- grep(".tree", names(coefs))
