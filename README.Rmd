@@ -91,7 +91,7 @@ gt2 <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE,
 plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
-We now obtained only a single split. Increased flexibility of the smooth curves seems to have accounted for the difference between Eugene and Sapiumwe saw in the earlier tree. Otherwise, the results seem the smaew as before: The response variable values appear somewhat lower at the start in node 2, compared to node 3. This difference seems to have increased at the last measurements.
+We now obtained only a single split. Increased flexibility of the smooth curves seems to have accounted for the difference between Eugene and Sapium we saw in the earlier tree. Otherwise, the results seem the smaew as before: The response variable values appear somewhat lower at the start in node 2, compared to node 3. This difference seems to have increased at the last measurements.
 
 We again apply the `gam.check()` function:
 
@@ -109,7 +109,7 @@ plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 plot(gt3, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
 ```
 
-To the eye, a lower value dimension for the bases to represent the smooth terms seems to be more appriate, as it yields less wiglly lines. The lower value for `k` does not seem to yield a different tree or conclusions anyway. For now, we will stick with the value of `k = 5`.
+To the eye, a lower value dimension for the bases to represent the smooth terms seems to be more appriate, as it yields less wiggly lines. The lower value for `k` does not seem to yield a different tree or conclusions anyway. For now, we will stick with the value of `k = 5`.
 
 
 ## Further inspection of the fitted model
@@ -126,7 +126,7 @@ The `Parameteric coefficients` indicate that the intercepts in every terminal no
 
 The `Approximate significance of smooth terms` indicate significance of the smooth terms in all three terminal nodes.
 
-Using the `coef` method we can plot the coefficients from the terminal nodes:
+Using the `coef` method we can print the coefficients from the terminal nodes:
 
 ```{r}
 coef(gt3)
@@ -156,7 +156,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 We inspect the result:
 
 ```{r}
-plot(gt4, which = "tree", treeplot_ctrl = gpar(cex = .7))
+plot(gt4, which = "tree", treeplot_ctrl = list(gpar(cex = .7)))
 ```
 
 
@@ -208,7 +208,7 @@ Note that by default, the `coef` method returns the local estimates, but we can 
 We can plot the tree and the models fitted in each of the terminal nodes:
 
 ```{r}
-plot(gt5, which = "tree", gp = gpar(cex = .7))
+plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 plot(gt5, which = "nodes")
 ```
 

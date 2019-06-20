@@ -96,9 +96,9 @@ gam.check(gt1$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                 k'  edf k-index p-value  
-#> s(PAR):.tree2 9.00 7.14    0.93   0.040 *
-#> s(PAR):.tree4 9.00 3.83    0.93   0.020 *
-#> s(PAR):.tree5 9.00 6.82    0.93   0.025 *
+#> s(PAR):.tree2 9.00 7.14    0.93   0.035 *
+#> s(PAR):.tree4 9.00 3.83    0.93   0.040 *
+#> s(PAR):.tree5 9.00 6.82    0.93   0.015 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -115,7 +115,7 @@ plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 
 ![](inst/README-figures/README-unnamed-chunk-8-1.png)
 
-We now obtained only a single split. Increased flexibility of the smooth curves seems to have accounted for the difference between Eugene and Sapiumwe saw in the earlier tree. Otherwise, the results seem the smaew as before: The response variable values appear somewhat lower at the start in node 2, compared to node 3. This difference seems to have increased at the last measurements.
+We now obtained only a single split. Increased flexibility of the smooth curves seems to have accounted for the difference between Eugene and Sapium we saw in the earlier tree. Otherwise, the results seem the smaew as before: The response variable values appear somewhat lower at the start in node 2, compared to node 3. This difference seems to have increased at the last measurements.
 
 We again apply the `gam.check()` function:
 
@@ -133,8 +133,8 @@ gam.check(gt2$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value  
-#> s(PAR):.tree2 17.00  7.73    0.92   0.025 *
-#> s(PAR):.tree3 17.00  6.58    0.92   0.020 *
+#> s(PAR):.tree2 17.00  7.73    0.92   0.035 *
+#> s(PAR):.tree3 17.00  6.58    0.92   0.030 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -157,7 +157,7 @@ plot(gt3, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
 
 ![](inst/README-figures/README-unnamed-chunk-10-2.png)
 
-To the eye, a lower value dimension for the bases to represent the smooth terms seems to be more appriate, as it yields less wiglly lines. The lower value for `k` does not seem to yield a different tree or conclusions anyway. For now, we will stick with the value of `k = 5`.
+To the eye, a lower value dimension for the bases to represent the smooth terms seems to be more appriate, as it yields less wiggly lines. The lower value for `k` does not seem to yield a different tree or conclusions anyway. For now, we will stick with the value of `k = 5`.
 
 Further inspection of the fitted model
 --------------------------------------
@@ -199,7 +199,7 @@ The `Parameteric coefficients` indicate that the intercepts in every terminal no
 
 The `Approximate significance of smooth terms` indicate significance of the smooth terms in all three terminal nodes.
 
-Using the `coef` method we can plot the coefficients from the terminal nodes:
+Using the `coef` method we can print the coefficients from the terminal nodes:
 
 ``` r
 coef(gt3)
@@ -245,7 +245,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 We inspect the result:
 
 ``` r
-plot(gt4, which = "tree", treeplot_ctrl = gpar(cex = .7))
+plot(gt4, which = "tree", treeplot_ctrl = list(gpar(cex = .7)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-15-1.png)
@@ -349,7 +349,7 @@ Note that by default, the `coef` method returns the local estimates, but we can 
 We can plot the tree and the models fitted in each of the terminal nodes:
 
 ``` r
-plot(gt5, which = "tree", gp = gpar(cex = .7))
+plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-19-1.png)
