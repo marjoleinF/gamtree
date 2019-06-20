@@ -4,7 +4,8 @@
 \alias{plot.gamtree}
 \title{Plotting of GAM trees}
 \usage{
-\method{plot}{gamtree}(x, which = "both", ...)
+\method{plot}{gamtree}(x, which = "both", treeplot_ctrl = list(),
+  gamplot_ctrl = list(), ...)
 }
 \arguments{
 \item{x}{object of class \code{gamtree}.}
@@ -14,10 +15,11 @@ followed by the model fitted in the terminal nodes. Alternatively, \code{"tree"}
 will plot the tree structure only, and \code{"nodes"} will plot the terminal-node
 models only.}
 
-\item{...}{arguments to be passed to \code{plot.gam}.}
+\item{treeplot_ctrl}{list of arguments to be passed to \code{plot.party()}.}
 
-\item{tp_args}{a list with additional control arguments to be passed to
-the \code{tp_args} argument of \code{plot.party}.}
+\item{gamplot_ctrl}{list of arguments to be passed to \code{plot,gam()}.}
+
+\item{...}{further arguments, currently not used.}
 }
 \description{
 Takes a fitted GAM tree and plots the smooth functions fitted in each of the

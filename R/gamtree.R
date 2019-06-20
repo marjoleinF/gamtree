@@ -261,6 +261,7 @@ gamtree <- function(tree_form, gam_form = NULL, data, weights = NULL,
         }
       }
     }
+    keep_terms <- keep_terms[-which(keep_terms == "(Intercept)")]
     data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
                                  terms = keep_terms))
     
@@ -344,9 +345,9 @@ summary.gamtree <- function(object, ...) {
 #' followed by the model fitted in the terminal nodes. Alternatively, \code{"tree"}
 #' will plot the tree structure only, and \code{"nodes"} will plot the terminal-node
 #' models only.
-#' @param tp_args a list with additional control arguments to be passed to
-#' the \code{tp_args} argument of \code{plot.party}.  
-#' @param ... arguments to be passed to \code{plot.gam}.
+#' @param treeplot_ctrl list of arguments to be passed to \code{plot.party()}.
+#' @param gamplot_ctrl list of arguments to be passed to \code{plot,gam()}. 
+#' @param ... further arguments, currently not used. 
 #' 
 #' @examples 
 #' gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
@@ -356,12 +357,14 @@ summary.gamtree <- function(object, ...) {
 #' 
 #' @importFrom graphics plot par
 #' @export
-plot.gamtree <- function(x, which = "both", ...) {
-  ## TODO: allow for passing arguments both to plot.gam and plot.party
+plot.gamtree <- function(x, which = "both", treeplot_ctrl = list(), 
+                         gamplot_ctrl = list(), ...) {
   ## TODO: allow for plotting local (current default) and global smooths 
   if (which != "nodes") {
     ## Plot observed data in terminal nodes:
-    plot(x$tree, terminal_panel = node_bivplot, ...)
+    treeplot_ctrl[["x"]] <- x$tree
+    treeplot_ctrl[["terminal_panel"]] <- node_bivplot
+    do.call(plot, treeplot_ctrl)
   }
   if (which != "tree") {
     ## Plot models in terminal nodes:
@@ -377,7 +380,9 @@ plot.gamtree <- function(x, which = "both", ...) {
       ## This requires specifying the 'select' argument, which appears to
       ## count smooth terms first, then parametric terms, but only of order 1,
       ## that is, only intercept terms are plotted.
-      plot(x$tree[[i]]$node$info$object, main = paste("node", i), ...)
+      gamplot_ctrl[["x"]] <- x$tree[[i]]$node$info$object
+      gamplot_ctrl[["main"]] <- paste("node", i)
+      do.call(plot, gamplot_ctrl)
     }
   }
 }
@@ -401,15 +406,19 @@ plot.gamtree <- function(x, which = "both", ...) {
 #' @importFrom stats coef
 coef.gamtree <- function(object, which = "local", ...) {
   coefs <- object$gamm$coefficients
-  local_coef_ids <- grep(".tree", names(coefs))
-  if (which == "local") {
-    local_coefs <- coefs[local_coef_ids]
-    no_nodes <- width(object$tree)
-    coefs <- coef(object$tree)
-    coefs[, 1] <- local_coefs[1:no_nodes]
-    coefs[, -1] <- matrix(local_coefs[-(1:no_nodes)], byrow = TRUE, nrow = no_nodes)
-  } else if (which == "global") {
-    coefs <- coefs[-local_coef_ids]
+  if (all(!grepl(".tree", coefs))) {
+    warning("No splits were made in the tree. All estimated coefficients are global and all will be returned.")
+  } else {
+    local_coef_ids <- grep(".tree", names(coefs))
+    if (which == "local") {
+      local_coefs <- coefs[local_coef_ids]
+      no_nodes <- width(object$tree)
+      coefs <- coef(object$tree)
+      coefs[, 1] <- local_coefs[1:no_nodes]
+      coefs[, -1] <- matrix(local_coefs[-(1:no_nodes)], byrow = TRUE, nrow = no_nodes)
+    } else if (which == "global") {
+      coefs <- coefs[-local_coef_ids]
+    }
   }
   return(coefs)
 }
