@@ -1,4 +1,4 @@
-utils::globalVariables(c(".tree", ".global", ".weights", ".cluster"))
+utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster"))
 
 ## From mob() documentation:
 ##
@@ -24,26 +24,17 @@ utils::globalVariables(c(".tree", ".global", ".weights", ".cluster"))
 #' variable is estimated, while accounting for globally specified smooth 
 #' functions and random effects.
 #' 
-#' @param tree_form specifies the response and predictor variable for the 
-#' node-specific GAM (separated by a tilde), and the partitioning variables, 
-#' separated by a vertical bar. By default, a thin plate regression spline 
-#' smooth (as implemented in \code{mgcv::s()}) will be fitted to the local 
-#' predictor variable. Only one local predictor variable can be specified, 
-#' currently. Arguments to be passed to function \code{s()} should be supplied
-#' to argument \code{s_ctrl} (only for the node-specific model, arguments for
-#' global smooths should be included directly in the \code{gam_form}).
-#' @param gam_form specifies the global model, that is, the smooth and
-#' parametric terms to be estimated globally. The formula should contain 
-#' the response variable, followed by a tilde \code{~}, followed by the 
-#' global smooth and parametric terms to be fitted. In contrast to the 
-#' \code{tree_form}, the global terms can be specified as is customary for
-#' \code{gam()}. If \code{NULL}, no global (only local) parameters will be 
-#' estimated.
+#' @param formula specifies the model formula, consisting of three or four 
+#' parts: the response variable followed by a tilde, the terms for the 
+#' node-specific GAM followed by a vertical bar, the partitioning variables 
+#' followed by a vertical bar, and optionally the terms for the global GAM. 
+#' See examples below.
 #' @param data specifies the dataset (must be a data.frame).
-#' @param weights optional numeric vector of case weights.
+#' @param weights currently ignored! optional numeric vector of case weights.
 #' @param cluster optional numeric or factor vector with a cluster ID to be 
 #' passed employed for clustered covariances in the parameter stability tests.
-#' @param offset numeric vector with an a priori known component to be included
+#' @param offset currently ignored! numeric vector with an a priori known 
+#' component to be included
 #' in the model \code{y ~ x1 + x2 + ....}. Will be applied to both the local
 #' and global model and will not be updated in consecutive iterations. 
 #' @param abstol specifies the convergence criterion. If the log-likelihood 
@@ -58,10 +49,6 @@ utils::globalVariables(c(".tree", ".global", ".weights", ".cluster"))
 #' @param mob_ctrl a list with control parameters as returned by \code{mob_control}
 #' to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
 #' `data.frame`, by default, and cannot be adjusted.)
-#' @param s_ctrl a list of arguments to be passed to the locally
-#' fitted \code{s()} function. If \code{NULL}, the default arguments of 
-#' function \code{s()} will be employed. NOTE: argument \code{by} cannot be
-#' specified, as \code{gamtreee} requires the use of this argument.
 #' @param ... additional arguments to be passed the locally fitted \code{gam}s
 #' , through \code{mob()}'s fitting function (currently, the only option is the 
 #' default \code{gam_fit()}).
@@ -71,127 +58,54 @@ utils::globalVariables(c(".tree", ".global", ".weights", ".cluster"))
 #' fitted full GAM with both local and/or global fitted effects (in \code{$gamm}). 
 #' 
 #' @examples
-#' gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
-#'               s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+#' gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species | s(cluster_id, bs = "re") + noise, 
+#'               data = eco, cluster = eco$specimen, verbose = FALSE)
 #' summary(gt)
 #' 
-#' @import mgcv partykit
-#' @importFrom stats as.formula formula logLik predict update
+#' @import mgcv partykit Formula
+#' @importFrom stats as.formula formula logLik predict update terms
 #' @export
-gamtree <- function(tree_form, gam_form = NULL, data, weights = NULL,
-                    cluster = NULL, offset = NULL, abstol = 0.001, 
-                    verbose = TRUE, method = "REML", s_ctrl = NULL, 
-                    mob_ctrl = NULL, ...) {
-  
-  if (!is.null(s_ctrl)) {
-    if (is.list(s_ctrl)) {
-      if (!is.null(s_ctrl$by)) {
-        warning("Argument 'by' cannot be specified for locally fitted smooths.")
-      }
-    } else {
-      warning("Argument s_ctrl should be a list or NULL.")
-    }
-  }
+gamtree <- function(formula, data, weights = NULL, cluster = NULL, 
+                    offset = NULL, abstol = 0.001, 
+                    verbose = TRUE, method = "REML", mob_ctrl = NULL, 
+                    ...) {
   
   data$.weights <- if (is.null(weights)) 1 else weights
   if (!is.null(cluster)) data$.cluster <- cluster
   
   if (is.null(mob_ctrl)) {
-    mob_ctrl <- mob_control(verbose = verbose, xtype = "data.frame")
+    mob_ctrl <- mob_control(verbose = verbose, xtype = "data.frame",
+                            ytype = "data.frame")
   } else {
     mob_ctrl$verbose <- verbose
-    mob_ctrl$xtype <- "data.frame"
+    mob_ctrl$ytype <- mob_ctrl$xtype <- "data.frame"
   }
   
-  ## Prepare gam formula combining tree and global effects:
-  if (is.null(gam_form)) gam_form <- formula(paste(tree_form[[2]], "~ 0"))
-  theDots <- list(...)
-  n_FUN <- ifelse(is.null(theDots$n_FUN), 1L, theDots$n_FUN)
-  FUN <- ifelse(is.null(theDots$FUN), "s", theDots$FUN)
-  
-  ## Construct local GAM terms for full GAM formula:
-  new <- new_alt <- all.vars(tree_form[[3]][[2]])
-  if (is.null(s_ctrl)) {
-    if (n_FUN == 1L) {
-      new <- paste0(FUN, "(", paste0(new, collapse = ", "), ", by = .tree)")
-      mob_gam_rhs <- new_alt <- paste0(
-        FUN, "(", paste0(new_alt, collapse = ", "), ")")
-      s_args <- NULL
-    } else {
-      ## Create a function call for each predictor:
-      preds <- preds_alt <- character()
-      if (length(new) != n_FUN) warning("Number of local smooths should be equal to 1, or number of predictor variables.")
-      for (i in 1:length(new)) {
-        preds <- c(preds, paste0(FUN, "(", new[i], ", by = .tree)"))
-        preds_alt <- c(preds_alt, paste0(FUN, "(", new_alt[i], ")"))
-      }
-      new <- paste0(preds, collapse = " + ")
-      mob_gam_rhs <- new_alt <- paste0(preds_alt, collapse = " + ") 
-      s_args <- NULL
-    }
+  ## Construct formulas for tree (tf), local gam (lgf), global gam (ggf):
+  ff <- as.Formula(formula)
+  lgf <- formula(ff, lhs = NULL, rhs = 1)   
+  local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
+  part_vars <- all.vars(formula(ff, lhs = 0, rhs = 2))
+  global_gam <- suppressWarnings(formula(ff, lhs = 0, rhs = 3) != "~0")  
+  if (global_gam) {
+    ggf <- formula(ff, lhs = NULL, rhs = 3)
   } else {
-    ## Prepare arguments to be passed to smooth functions:
-    s_ctrl_tmp <- s_ctrl
-    if (is.list(s_ctrl[[1L]])) {
-      ## Then make args a list of length n_FUN:
-      if (n_FUN > 1L) {
-        if (!length(s_ctrl_tmp) %in% c(1L, n_FUN)) 
-          warning("Argument s_ctrl should specify a list containing 1 or n_FUN lists.") 
-        s_args <- list()
-        for (i in 1L:n_FUN) {
-          if (any(char_ids <- sapply(s_ctrl[[i]], inherits, "character"))) {
-            s_ctrl_tmp[[i]][char_ids] <- paste0("'", s_ctrl[[i]][char_ids], "'")
-          }
-          s_args[[i]] <- paste(paste(names(s_ctrl[[i]]), s_ctrl_tmp[[i]], sep = "="), 
-                             collapse = ", ")
-        }
-      } else if (n_FUN == 1L) {
-        warning("Argument s_ctrl should specify a list containing 1 or n_FUN lists. Only the first list of s_ctrl will be used.")
-        s_ctrl <- s_ctrl_tmp <- s_ctrl[[1L]]
-        if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
-          s_ctrl_tmp[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
-        }
-        s_args <- paste(paste(names(s_ctrl), s_ctrl_tmp, sep = "="), collapse = ", ")  
-      }
-    } else {
-      if (n_FUN == 1L) {
-        if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
-          s_ctrl_tmp[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
-        }
-        s_args <- paste(paste(names(s_ctrl), s_ctrl_tmp, sep = "="), collapse = ", ")  
-      } else {
-        s_args <- list()
-        s_ctrl_tmp <- s_ctrl
-        for (i in 1L:n_FUN) {
-          if (any(char_ids <- sapply(s_ctrl, inherits, "character"))) {
-            s_ctrl_tmp[char_ids] <- paste0("'", s_ctrl[char_ids], "'")
-          }
-          s_args[[i]] <- paste(paste(names(s_ctrl), s_ctrl_tmp, sep = "="), collapse = ", ")           
-        }
-      }
-    }
-    
-    ## Prepare components of full GAM formula:
-    if (n_FUN == 1L) {
-      new <- paste0(FUN, "(", paste0(new, collapse = ", "), ", ", s_args, ", by = .tree)")
-      mob_gam_rhs <- new_alt <- paste0(
-        FUN, "(", paste0(new_alt, collapse = ", "), ", ", s_args, ")")
-    } else if (n_FUN > 1L) {
-      if (length(new) != n_FUN) warning("n_FUN should be equal to 1, or the number of predictor variables.")
-      preds <- preds_alt <- character()
-      for (i in 1:length(new)) {
-        preds <- c(preds, paste0(FUN, "(", new[i], ", ", s_args[[i]], ", by = .tree)"))
-        preds_alt <- c(preds_alt, paste0(FUN, "(", new_alt[i], ", ", s_args[[i]], ")"))
-      }
-      new <- paste0(preds, collapse = " + ")
-      mob_gam_rhs <- new_alt <- paste0(preds_alt, collapse = " + ")
-    }
+    ggf <- formula(ff, lhs = 1, rhs = 0)
   }
-  ## Construct full GAM formula:
-  new <- paste0("~ 0 + .tree + ", new, "+ .")
+  tf <- paste(ff[[2]], "~", 
+              paste(local_vars, collapse = " + "), "|", 
+              paste(part_vars, collapse = " + "))
+
+  ## Construct formulas for full gam (fgf):
+  new_alt <- new <- attr(terms(lgf), "term.labels")
+  new <- gsub(")", ", by = .tree)", new)
+  new[!grepl(")", new)] <- paste0(new[!grepl(")", new)], ":.tree") 
+  new <- paste(new, collapse = " + ")
+  new_alt <- paste(new_alt, collapse = " + ")
+  new <- paste0("~ 0 + .tree + ", new, " + .")
   new_alt <- paste0("~ ", new_alt, "+ .")
-  gamm_form <- update(old = gam_form, new = formula(new))
-  gamm_form_alt <- update(old = gam_form, new = formula(new_alt))
+  fgf <- update(old = ggf, new = formula(new))
+  fgf_alt <- update(old = ggf, new = formula(new_alt))
   
   ## remember call
   cl <- match.call()
@@ -214,23 +128,24 @@ gamtree <- function(tree_form, gam_form = NULL, data, weights = NULL,
     
     ## Grow tree and get node memberships:
     if (is.null(cluster)) {
-      tree <- mob(tree_form, data = data, mob_gam_rhs = mob_gam_rhs, 
-                  fit = gam_fit, method = method, weights = .weights,
-                  offset = .global, control = mob_ctrl, ...)   
+      tree <- mob(tf, data = data, local_gam_form = lgf, 
+                  fit = gam_fit, method = method, 
+                  weights = .weights, offset = .global, 
+                  control = mob_ctrl, ...)   
     } else {
-      tree <- mob(tree_form, data = data, mob_gam_rhs = mob_gam_rhs, 
-                  fit = gam_fit, method = method, weights = .weights,
-                  offset = .global, control = mob_ctrl, cluster = .cluster, 
-                  ...)       
+      tree <- mob(tf, data = data, local_gam_form = lgf, 
+                  fit = gam_fit, method = method, 
+                  weights = .weights, offset = .global, 
+                  control = mob_ctrl, cluster = .cluster, ...)       
     }
     data$.tree <- factor(predict(tree, newdata = data, type = "node"))
     
     ## Fit gam with global and local models:
     if (length(tree) > 1L) {
-      gamm <- gam(gamm_form, data = data, method = method, weights = .weights,
+      gamm <- gam(fgf, data = data, method = method, weights = .weights,
                   offset = .offset)
     } else {
-      gamm <- gam(gamm_form_alt, data = data, method = method, weights = .weights,
+      gamm <- gam(fgf_alt, data = data, method = method, weights = .weights,
                   offset = .offset)
     }
     
@@ -261,7 +176,9 @@ gamtree <- function(tree_form, gam_form = NULL, data, weights = NULL,
         }
       }
     }
-    keep_terms <- keep_terms[-which(keep_terms == "(Intercept)")]
+    if (length(inds <- which(keep_terms == "(Intercept)")) > 0L) {
+      keep_terms <- keep_terms[-inds]
+    }
     data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
                                  terms = keep_terms))
     
@@ -279,9 +196,8 @@ gamtree <- function(tree_form, gam_form = NULL, data, weights = NULL,
   
   ## collect results
   result <- list(
-    tree_form = tree_form,
-    gam_form = gam_form,
-    gamm_form = gamm_form,
+    formula = formula,
+    gamm_form = fgf,
     call = cl,
     tree = tree,
     gamm = gamm,
@@ -301,22 +217,11 @@ gamtree <- function(tree_form, gam_form = NULL, data, weights = NULL,
 ##
 ## Fitting function for gam-based recursive partitioning with MOB.
 ##
-##
-## mob_gam_rhs: character. Right-hand side of formula for fitting node-specific 
-##              GAMs. some examples:
-##                "s(time, k = 4L, bs = 'cr')" or
-##                "s(time, k = 4L, bs = 'cr')" or 
-##                "ti(time, length)" or
-##                "te(time, length, fx = TRUE)"
-## 
 gam_fit <- function(y, x, start = NULL, weights = NULL, 
-                    offset = NULL, mob_gam_rhs, ...) {
+                    offset = NULL, local_gam_form, ...) {
   
-  ## Add response and create formula:
-  ff <- as.formula(paste0("y ~ ", mob_gam_rhs))
-  
-  ## Fit and return model:
-  gam(ff, offset = offset, weights = weights, data = cbind(x, y), ...)
+  ## TODO: Allow for taking weights and offset arguments
+  gam(local_gam_form, data = cbind(x, y), ...)
   
 }
 
@@ -350,8 +255,8 @@ summary.gamtree <- function(object, ...) {
 #' @param ... further arguments, currently not used. 
 #' 
 #' @examples 
-#' gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
-#'               s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+#' gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species | s(cluster_id, bs = "re") + noise, 
+#'               data = eco, verbose = FALSE, cluster = eco$specimen) 
 #' plot(gt, which = "tree") # fdefault is which = 'both'
 #' plot(gt, which = "nodes", residuals = TRUE)
 #' 

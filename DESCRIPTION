@@ -6,7 +6,7 @@ Description: Recursively partitions the observations in a dataset, based on the 
 	specified generalized additive model (GAM), while possibly also estimating globally specified GAM 
 	terms. Uses package mgcv for fitting smooth and parametetric terms, used function package partykit 
 	for recursive partitioning.
-Depends: R (>= 3.5.3), mgcv, partykit, sandwich
+Depends: R (>= 3.5.3), mgcv, partykit, sandwich, Formula
 License: GPL-2 | GPL-3
 Encoding: UTF-8
 LazyData: true

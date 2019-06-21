@@ -5,36 +5,26 @@
 \title{Recursively partition a dataset based on a (local) GAM, while accounting for 
 globally specified GAM terms.}
 \usage{
-gamtree(tree_form, gam_form = NULL, data, weights = NULL,
-  cluster = NULL, offset = NULL, abstol = 0.001, verbose = TRUE,
-  method = "REML", s_ctrl = NULL, mob_ctrl = NULL, ...)
+gamtree(formula, data, weights = NULL, cluster = NULL, offset = NULL,
+  abstol = 0.001, verbose = TRUE, method = "REML", mob_ctrl = NULL,
+  ...)
 }
 \arguments{
-\item{tree_form}{specifies the response and predictor variable for the 
-node-specific GAM (separated by a tilde), and the partitioning variables, 
-separated by a vertical bar. By default, a thin plate regression spline 
-smooth (as implemented in \code{mgcv::s()}) will be fitted to the local 
-predictor variable. Only one local predictor variable can be specified, 
-currently. Arguments to be passed to function \code{s()} should be supplied
-to argument \code{s_ctrl} (only for the node-specific model, arguments for
-global smooths should be included directly in the \code{gam_form}).}
-
-\item{gam_form}{specifies the global model, that is, the smooth and
-parametric terms to be estimated globally. The formula should contain 
-the response variable, followed by a tilde \code{~}, followed by the 
-global smooth and parametric terms to be fitted. In contrast to the 
-\code{tree_form}, the global terms can be specified as is customary for
-\code{gam()}. If \code{NULL}, no global (only local) parameters will be 
-estimated.}
+\item{formula}{specifies the model formula, consisting of three or four 
+parts: the response variable followed by a tilde, the terms for the 
+node-specific GAM followed by a vertical bar, the partitioning variables 
+followed by a vertical bar, and optionally the terms for the global GAM. 
+See examples below.}
 
 \item{data}{specifies the dataset (must be a data.frame).}
 
-\item{weights}{optional numeric vector of case weights.}
+\item{weights}{currently ignored! optional numeric vector of case weights.}
 
 \item{cluster}{optional numeric or factor vector with a cluster ID to be 
 passed employed for clustered covariances in the parameter stability tests.}
 
-\item{offset}{numeric vector with an a priori known component to be included
+\item{offset}{currently ignored! numeric vector with an a priori known 
+component to be included
 in the model \code{y ~ x1 + x2 + ....}. Will be applied to both the local
 and global model and will not be updated in consecutive iterations.}
 
@@ -49,11 +39,6 @@ full mixed-effects gam model is printed.}
 
 \item{method}{The smoothing parameter estimation method used by \code{gam()}.
 See documentation of function \code{gam()} for details.}
-
-\item{s_ctrl}{a list of arguments to be passed to the locally
-fitted \code{s()} function. If \code{NULL}, the default arguments of 
-function \code{s()} will be employed. NOTE: argument \code{by} cannot be
-specified, as \code{gamtreee} requires the use of this argument.}
 
 \item{mob_ctrl}{a list with control parameters as returned by \code{mob_control}
 to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
@@ -75,8 +60,8 @@ variable is estimated, while accounting for globally specified smooth
 functions and random effects.
 }
 \examples{
-gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
-              s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species | s(cluster_id, bs = "re") + noise, 
+              data = eco, cluster = eco$specimen, verbose = FALSE)
 summary(gt)
 
 }

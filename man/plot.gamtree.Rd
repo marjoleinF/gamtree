@@ -26,8 +26,8 @@ Takes a fitted GAM tree and plots the smooth functions fitted in each of the
 terminal nodes of the tree.
 }
 \examples{
-gt <- gamtree(Pn ~ PAR | Species, data = eco, verbose = FALSE, 
-              s_ctrl = list(k = 5L), mob_ctrl = mob_control(maxdepth = 3L))
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species | s(cluster_id, bs = "re") + noise, 
+              data = eco, verbose = FALSE, cluster = eco$specimen) 
 plot(gt, which = "tree") # fdefault is which = 'both'
 plot(gt, which = "nodes", residuals = TRUE)
 
