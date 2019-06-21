@@ -23,7 +23,7 @@ The package is experimental, much work needs to be done.
 
 
 
-# Example
+# Examples
 
 First, we load the package:
 
@@ -41,16 +41,36 @@ summary(eco)
 The data contain `r nrow(eco)` observations. The `Species` variable is an indicator for plant species. Variable `PAR` well be used as a predictor for the node-specific model, variable `Pn` as the response. Variables `cluster_id` and `noise` are in fact noise variables, which will be used to specify global model terms. Finally, `specimen` is an indicator for the individual plants.
 
 
+## Specifying the model formula 
+
+The model is specified through a three- or fourth-part formula, comprising a response variable, local (subgroup-specific) terms, partitiong variables and global terms. Informally written, a full four-part GAM tree formula can be described as: 
+
+```{r, eval = FALSE}
+response ~ local terms | partitioning variables | global terms
+```
+
+The response must be a single continuous variable. The local terms, separated from the response by a tilde (`~`), can comprise one or more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. The partitioning variables, separated from the local terms by a vertical bar(`|`), are specified by providing their names. The global terms, separated from the partitioning variables by a vertical bar (`|`), can comprise one of more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. 
+
+One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on a subgroup structure based on the partitioning variables, which is estimated conditional on the estimated global terms. 
+
+It is not required to specify the global terms; these may be omitted, yielding a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms:
+
+```{r, eval = FALSE}
+response ~ local terms | partitioning variables
+```
+
+ 
+
 ## GAM-based recursive partition without global effects
 
-We first fit a GAM-based recursive partition without global effects. In that case, we specify the first argument (`formula`) with a three-part formula: the response followed by a tilde (`~`), then the node-specific model followed by a vertical bar (`|`), then the potential partitioning variables. Smooth and parametric terms can be specified as is customary with function `gam()`. Furthermore, we specify the `cluster` argument, which will be passed to the recursive partitioning procedure (function `mob()` from package **partykit**) to indicate that the individual observations in the dataset are not independent, but nested within the different specimen. 
+We first fit a GAM-based recursive partition without global effects. We specify `Pn` as the response, with a smooth term for `PAR`. We specify `Species` as the only potential partitioning variable. Furthermore, we specify the `cluster` argument, which will be passed to the recursive partitioning procedure (function `mob()` from package **partykit**) to indicate that the individual observations in the dataset are not independent, but nested within the different specimen. 
 
 ```{r}
 gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, verbose = FALSE, 
                cluster = eco$specimen)
 ```
 
-Furthermore, we specified the `verbose` argument, to suppress the progress information which is printed to the command line, by default.
+We also specified the `verbose` argument, to suppress the progress information which is printed to the command line, by default.
 
 We can inspect the partition by plotting the tree:
 
@@ -161,15 +181,7 @@ plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 
 ## GAM-based recursive partition with global effects
 
-We now also include a global part in the fitted model. That is, we specify the partitioning and the node-specific models exactly as above, but we introduce global terms, that will be evaluated globally, using all observations. 
-
-The global model is specified through including a fourth part in the `formula`, separated by a vertical bar (`|`) from the partitioning variables. Informally written, a full `gamtree` thus looks as follows: 
-
-```{r, eval = FALSE}
-response ~ local + terms | partitioning + variables | global + terms
-```
-
-We will add global terms to the earlier `gamtree` model, based on the `noise` and `cluster_id` variables. As both are in fact noise variables, so these should not have significant or substantial effects. They merely serve as an illustration of specifying a global model. We will specify `noise` as having a parametric (i.e., linear) effect and `cluster_id` as an indicator for a random intercept term (which can be fitted using function `s()` and specifying `bs = "re"`). 
+We now also include a global part in the fitted model. We add global terms to the earlier `gamtree` model, based on the `noise` and `cluster_id` variables. Both are in fact noise variables, so these should not have significant or substantial effects. They merely serve as an illustration of specifying a global model. We will specify `noise` as having a parametric (i.e., linear) effect and `cluster_id` as an indicator for a random intercept term (which can be fitted using function `s()` and specifying `bs = "re"`). 
  
 To estimate both the local and global models, an iterative approach is taken:
 
