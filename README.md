@@ -94,9 +94,9 @@ gam.check(gt1$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                 k'  edf k-index p-value  
-#> s(PAR):.tree2 9.00 7.14    0.93   0.020 *
-#> s(PAR):.tree4 9.00 3.83    0.93   0.045 *
-#> s(PAR):.tree5 9.00 6.82    0.93   0.020 *
+#> s(PAR):.tree2 9.00 7.14    0.93   0.035 *
+#> s(PAR):.tree4 9.00 3.83    0.93   0.025 *
+#> s(PAR):.tree5 9.00 6.82    0.93   0.040 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -131,7 +131,7 @@ gam.check(gt2$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value   
-#> s(PAR):.tree2 17.00  7.73    0.92   0.010 **
+#> s(PAR):.tree2 17.00  7.73    0.92   0.005 **
 #> s(PAR):.tree3 17.00  6.58    0.92   0.025 * 
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -207,7 +207,7 @@ coef(gt3)
 #> 5    5.198775 -4.155897 -12.830898 10.650817 6.385477
 ```
 
-We can do an additional check on the observation-level contributions to the gradient. These should sum to (a value close to) zero. We can do this using the `check_grad()` function. It computes the sum of the observation-wise contributions to the gradient. These sums should be reasonably close to zero:
+We can do an additional check on the observation-level contributions to the gradient. We can do this using the `check_grad()` function. It computes the sum of the observation-wise contributions to the gradient. These sums should be reasonably close to zero:
 
 ``` r
 check_grad(gt3)
@@ -244,15 +244,15 @@ plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 GAM-based recursive partition with global effects
 -------------------------------------------------
 
-We now also include a global part in the fitted model. That is, we specify the partitiong and the node-specific models exactly as above, but we introduce global terms, that will be evaluated globally, using all observations.
+We now also include a global part in the fitted model. That is, we specify the partitioning and the node-specific models exactly as above, but we introduce global terms, that will be evaluated globally, using all observations.
 
-The global model is specified through including a fourth part to the `formula`, separated by a vertical bar (`|`) from the partitioning variables. Informally written, a full `gamtree` thus looks as follows:
+The global model is specified through including a fourth part in the `formula`, separated by a vertical bar (`|`) from the partitioning variables. Informally written, a full `gamtree` thus looks as follows:
 
 ``` r
 response ~ local + terms | partitioning + variables | global + terms
 ```
 
-We will now also include global terms based on the `noise` and `cluster_id` variables. As both are in fact noise variables, so these should not have significant or substantial effects. They merely serve as an illustration of specifying a global model. We will specify `noise` as having a parametric (i.e., linear) effect and `cluster_id` as an indicator for a random intercept term (which can be fitted using function `s()` and specifying `bs = "re"`).
+We will add global terms to the earlier `gamtree` model, based on the `noise` and `cluster_id` variables. As both are in fact noise variables, so these should not have significant or substantial effects. They merely serve as an illustration of specifying a global model. We will specify `noise` as having a parametric (i.e., linear) effect and `cluster_id` as an indicator for a random intercept term (which can be fitted using function `s()` and specifying `bs = "re"`).
 
 To estimate both the local and global models, an iterative approach is taken:
 
@@ -343,7 +343,7 @@ plot(gt5, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
 
 ![](inst/README-figures/README-unnamed-chunk-20-2.png)
 
-The local models are very similar those in the earlier tree, as the global terms have minor/zero effects.
+The local models are very similar to those in the earlier tree, as the global terms have minor/zero effects.
 
 We can again check whether the sums of the observation-wise gradient contributions are reasonably close to zero:
 
@@ -402,7 +402,7 @@ summary(gt6)
 #> -REML = 1038.8  Scale est. = 1.4748    n = 628
 ```
 
-Alternatively, we can also employ different functions than `s()` for the node-specific (or global) GAMs:
+We can also employ different functions than `s()` for the node-specific (or global) GAMs:
 
 ``` r
 gt9 <- gamtree(Pn ~ te(PAR, noise) | Species | s(cluster_id, bs="re"),
@@ -489,33 +489,30 @@ We can also compare the predicted values:
 ``` r
 newdat <- eco
 newdat$x <- newdat$PAR
-preds <- data.frame(gam = predict(gt4$gamm),
-                    tree = predict(gt4$tree, newdata = newdat, 
+preds <- data.frame(gam = predict(gt3$gamm),
+                    tree = predict(gt3$tree, newdata = newdat, 
                                    type = "response"))
 cor(preds)
-#>           gam     tree
-#> gam  1.000000 0.999984
-#> tree 0.999984 1.000000
+#>            gam      tree
+#> gam  1.0000000 0.9997122
+#> tree 0.9997122 1.0000000
 colMeans(preds)
 #>      gam     tree 
 #> 4.130796 4.130796
 sapply(preds, var)
 #>      gam     tree 
-#> 1.515587 1.514599
+#> 1.557576 1.555994
 sapply(preds, max)
 #>      gam     tree 
-#> 6.452986 6.454960
+#> 6.857160 6.858835
 sapply(preds, min)
 #>      gam     tree 
-#> 2.254761 2.247853
+#> 2.112307 2.151734
 cols <- c(rep("white", times = 2), "yellow", "orange", "white", 
           "purple", "blue") 
-plot(preds, col = cols[predict(gt4$tree)])
 ```
 
-![](inst/README-figures/README-unnamed-chunk-27-1.png)
-
-The predicted values are very similar, but not the identical.
+The predicted values are very similar, but not identical.
 
 The differences may be due to the different way of estimating a smooth with the `by` argument specified (which is used for estimating the full GAM), and estimating separate smooths in each subgroup (which is done in estimating the partition with local GAMs). Differences may be due to the scale and smoothing parameters not being the same between these two approaches:
 
