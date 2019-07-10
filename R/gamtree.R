@@ -86,15 +86,26 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
   lgf <- formula(ff, lhs = NULL, rhs = 1)   
   local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
   part_vars <- all.vars(formula(ff, lhs = 0, rhs = 2))
+  lgf
   global_gam <- suppressWarnings(formula(ff, lhs = 0, rhs = 3) != "~0")  
   if (global_gam) {
     ggf <- formula(ff, lhs = NULL, rhs = 3)
   } else {
     ggf <- formula(ff, lhs = 1, rhs = 0)
   }
-  tf <- paste(ff[[2]], "~", 
-              paste(local_vars, collapse = " + "), "|", 
-              paste(part_vars, collapse = " + "))
+  formula(ff, lhs = 1, rhs = 0)
+  formula(ff, lhs = 0, rhs = 1)
+  formula(ff, lhs = 0, rhs = 2)
+  formula(ff, lhs = 0, rhs = 3)
+  
+  response <- ff[[2]] 
+  if (length(response) > 1L && is.call(response[1])) {
+    response <- as.character(response)
+    response <- paste0(response[1], "(", response[2], ", ", response[3], ")")
+  } 
+  tf <- formula(paste(response, "~", 
+                paste(local_vars, collapse = " + "), "|", 
+                paste(part_vars, collapse = " + ")))
 
   ## Construct formulas for full gam (fgf):
   new_alt <- new <- attr(terms(lgf), "term.labels")
@@ -105,6 +116,9 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
   new <- paste0("~ 0 + .tree + ", new, " + .")
   new_alt <- paste0("~ ", new_alt, "+ .")
   fgf <- update(old = ggf, new = formula(new))
+  ## TODO: This should not omit intercept, but does in fgf_alt for 
+  ## formula <- cbind(succ, fail) ~ s(PAR) | Species
+  ## Only for cbind response? Only for local-only gamtree?
   fgf_alt <- update(old = ggf, new = formula(new_alt))
   
   ## remember call
@@ -143,10 +157,10 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
     ## Fit gam with global and local models:
     if (length(tree) > 1L) {
       gamm <- gam(fgf, data = data, method = method, weights = .weights,
-                  offset = .offset)
+                  offset = .offset, ...)
     } else {
       gamm <- gam(fgf_alt, data = data, method = method, weights = .weights,
-                  offset = .offset)
+                  offset = .offset, ...)
     }
     
     ## Obtain predictions of global model only:

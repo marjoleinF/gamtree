@@ -38,6 +38,17 @@ data(eco)
 summary(eco)
 ```
 
+
+```{r, eval = FALSE, echo = FALSE}
+## Try binomial response:
+eco$succ <- round(eco$Pn) + 2
+eco$fail <- 12 - eco$succ
+gt.b <- gamtree(cbind(succ, fail) ~ s(PAR) | Species, data = eco, verbose = FALSE, 
+               cluster = eco$specimen, family = binomial, mob_ctrl = mob_control(ytype = "matrix"))
+debug(gamtree)
+## this goes wrong because gam gets cbind(succ, fail).succ and cbind(succ, fail).fail as variables
+```
+
 The data contain `r nrow(eco)` observations. The `Species` variable is an indicator for plant species. Variable `PAR` well be used as a predictor for the node-specific model, variable `Pn` as the response. Variables `cluster_id` and `noise` are in fact noise variables, which will be used to specify global model terms. Finally, `specimen` is an indicator for the individual plants.
 
 
@@ -53,7 +64,7 @@ The response must be a single continuous variable. The local terms, separated fr
 
 One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on a subgroup structure based on the partitioning variables, which is estimated conditional on the estimated global terms. 
 
-It is not required to specify the global terms; these may be omitted, yielding a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms:
+It is not required to specify any global terms; they may simply be omitted. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms:
 
 ```{r, eval = FALSE}
 response ~ local terms | partitioning variables
@@ -69,6 +80,24 @@ We first fit a GAM-based recursive partition without global effects. We specify 
 gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, verbose = FALSE, 
                cluster = eco$specimen)
 ```
+
+
+```{r, echo=FALSE, eval=FALSE}
+gt1 <- gamtree(Pn ~ s(noise) | Species, data = eco, verbose = FALSE, 
+               cluster = eco$specimen, mob_ctrl = mob_control(maxdepth = 2L))
+sctest(gt1$tree)
+
+## What happens if the predictor is measured at the observation level, 
+## and we average the noise variable within cluster?
+
+eco2 <- eco
+eco2$noise <- rep(tapply(eco$noise, eco$specimen, mean), times = table(eco$specimen))
+gt2 <- gamtree(Pn ~ s(noise) | Species, data = eco2, verbose = FALSE, 
+               cluster = eco2$specimen,
+               mob_ctrl = mob_control(maxdepth = 2L))
+sctest(gt2$tree)
+```
+
 
 We also specified the `verbose` argument, to suppress the progress information which is printed to the command line, by default.
 

@@ -54,7 +54,7 @@ The response must be a single continuous variable. The local terms, separated fr
 
 One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on a subgroup structure based on the partitioning variables, which is estimated conditional on the estimated global terms.
 
-It is not required to specify the global terms; these may be omitted, yielding a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms:
+It is not required to specify any global terms; they may simply be omitted. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms:
 
 ``` r
 response ~ local terms | partitioning variables
@@ -68,6 +68,8 @@ We first fit a GAM-based recursive partition without global effects. We specify 
 ``` r
 gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, verbose = FALSE, 
                cluster = eco$specimen)
+#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
+#> not all 'rhs' available
 ```
 
 We also specified the `verbose` argument, to suppress the progress information which is printed to the command line, by default.
@@ -78,7 +80,7 @@ We can inspect the partition by plotting the tree:
 plot(gt1, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-7-1.png)
+![](inst/README-figures/README-unnamed-chunk-9-1.png)
 
 Through the `treeplot_ctrl` argument, we can specify additional argument to be passed to function `plot.party()`. We passed the `gp` argument, to have a smaller font size for the node and path labels than with the default `cex = 1`.
 
@@ -90,7 +92,7 @@ Alternatively, we can also plot the fitted GAMs in each of the terminal nodes, w
 plot(gt1, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-8-1.png)
+![](inst/README-figures/README-unnamed-chunk-10-1.png)
 
 We used the `gamplot_ctrl` argument to pass additional arguments to function `plot.gam()`. We specified the `residuals` argument, so that partial residuals are included as dots in the plotted smooths.
 
@@ -112,10 +114,10 @@ gam.check(gt1$gamm)
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                 k'  edf k-index p-value  
-#> s(PAR):.tree2 9.00 7.14    0.93   0.035 *
-#> s(PAR):.tree4 9.00 3.83    0.93   0.015 *
-#> s(PAR):.tree5 9.00 6.82    0.93   0.015 *
+#>                 k'  edf k-index p-value   
+#> s(PAR):.tree2 9.00 7.14    0.93   0.020 * 
+#> s(PAR):.tree4 9.00 3.83    0.93   0.005 **
+#> s(PAR):.tree5 9.00 6.82    0.93   0.020 * 
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -127,10 +129,12 @@ Based on the `gam.check()` function results, we could increase the value of `k`,
 ``` r
 gt2 <- gamtree(Pn ~ s(PAR, k=18L) | Species, data = eco, verbose = FALSE, 
                cluster = eco$specimen)
+#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
+#> not all 'rhs' available
 plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-10-1.png)
+![](inst/README-figures/README-unnamed-chunk-12-1.png)
 
 We now obtained only a single split. Increased flexibility of the smooth curves seems to have accounted for the difference between Eugene and Sapium we saw in the earlier tree. Otherwise, the results seem the same as before: The response variable values appear somewhat lower at the start in node 2, compared to node 3. This difference seems to have increased at the last measurements.
 
@@ -149,9 +153,9 @@ gam.check(gt2$gamm)
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                  k'   edf k-index p-value  
-#> s(PAR):.tree2 17.00  7.73    0.92   0.025 *
-#> s(PAR):.tree3 17.00  6.58    0.92   0.030 *
+#>                  k'   edf k-index p-value   
+#> s(PAR):.tree2 17.00  7.73    0.92   0.010 **
+#> s(PAR):.tree3 17.00  6.58    0.92   0.025 * 
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -163,16 +167,18 @@ We can also reduce the value of `k` to see if that yields less wiggly lines, and
 ``` r
 gt3 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, 
                cluster = eco$specimen, verbose = FALSE)
+#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
+#> not all 'rhs' available
 plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-12-1.png)
+![](inst/README-figures/README-unnamed-chunk-14-1.png)
 
 ``` r
 plot(gt3, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-12-2.png)
+![](inst/README-figures/README-unnamed-chunk-14-2.png)
 
 To the eye, a lower value dimension for the bases to represent the smooth terms seems to be more appriate, as it yields less wiggly lines. The lower value for `k` does not seem to yield a different tree or conclusions anyway. For now, we will stick with the value of `k = 5`.
 
@@ -248,6 +254,8 @@ Let's say would prefer to collapse nodes 4 and 5, because we do not think the di
 ``` r
 gt4 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, verbose = FALSE,
                cluster = eco$specimen, mob_ctrl = mob_control(maxdepth = 2L))
+#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
+#> not all 'rhs' available
 ```
 
 Note that function `mob_control()` (from package **partykit**) is used here, to generate a `list` of control arguments for function `mob()`.
@@ -258,7 +266,7 @@ We inspect the result:
 plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-17-1.png)
+![](inst/README-figures/README-unnamed-chunk-19-1.png)
 
 GAM-based recursive partition with global effects
 -------------------------------------------------
@@ -346,13 +354,13 @@ We can plot the tree and the models fitted in each of the terminal nodes:
 plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-21-1.png)
+![](inst/README-figures/README-unnamed-chunk-23-1.png)
 
 ``` r
 plot(gt5, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-21-2.png)
+![](inst/README-figures/README-unnamed-chunk-23-2.png)
 
 The local models are very similar to those in the earlier tree, as the global terms have minor/zero effects.
 
@@ -484,7 +492,7 @@ The partial effects as estimated in the tree nodes:
 plot(gt3, which = "nodes", gamplot_ctrl = list(residuals = TRUE, ylim = c(-3.8, 4.2)))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-26-1.png)
+![](inst/README-figures/README-unnamed-chunk-28-1.png)
 
 The partial effects as estimated in the full model:
 
@@ -493,7 +501,7 @@ par(mfrow = c(2, 2))
 plot(gt3$gamm, residuals = TRUE, ylim = c(-3.8, 4.2))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-27-1.png)
+![](inst/README-figures/README-unnamed-chunk-29-1.png)
 
 We can also compare the predicted values:
 
