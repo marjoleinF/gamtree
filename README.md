@@ -44,7 +44,7 @@ The data contain 628 observations. The `Species` variable is an indicator for pl
 Specifying the model formula
 ----------------------------
 
-The model is specified through a three- or fourth-part formula, comprising a response variable, local (subgroup-specific) terms, partitiong variables and global terms. Informally written, a full four-part GAM tree formula can be described as:
+The model is specified through a three- or fourth-part formula, comprising a response variable, local (subgroup-specific) terms, partitiong variables and global terms. Informally written, a full four-part GAM tree formula (with three-part left-hand side) can be described as:
 
 ``` r
 response ~ local terms | partitioning variables | global terms
@@ -52,9 +52,9 @@ response ~ local terms | partitioning variables | global terms
 
 The response must be a single continuous variable. The local terms, separated from the response by a tilde (`~`), can comprise one or more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. The partitioning variables, separated from the local terms by a vertical bar(`|`), are specified by providing their names. The global terms, separated from the partitioning variables by a vertical bar (`|`), can comprise one of more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`.
 
-One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on a subgroup structure based on the partitioning variables, which is estimated conditional on the estimated global terms.
+One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on the estimated global terms, conditional on a subgroup structure based on the partitioning variables.
 
-It is not required to specify any global terms; they may simply be omitted. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms:
+It is not required to specify any global terms, they can simply be omitted by specifying only a two-part left-hand side. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms. The formula can be described as:
 
 ``` r
 response ~ local terms | partitioning variables
@@ -68,8 +68,6 @@ We first fit a GAM-based recursive partition without global effects. We specify 
 ``` r
 gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, verbose = FALSE, 
                cluster = eco$specimen)
-#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
-#> not all 'rhs' available
 ```
 
 We also specified the `verbose` argument, to suppress the progress information which is printed to the command line, by default.
@@ -115,9 +113,9 @@ gam.check(gt1$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                 k'  edf k-index p-value   
-#> s(PAR):.tree2 9.00 7.14    0.93   0.020 * 
-#> s(PAR):.tree4 9.00 3.83    0.93   0.005 **
-#> s(PAR):.tree5 9.00 6.82    0.93   0.020 * 
+#> s(PAR):.tree2 9.00 7.14    0.93   0.025 * 
+#> s(PAR):.tree4 9.00 3.83    0.93   0.020 * 
+#> s(PAR):.tree5 9.00 6.82    0.93   0.010 **
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -129,8 +127,6 @@ Based on the `gam.check()` function results, we could increase the value of `k`,
 ``` r
 gt2 <- gamtree(Pn ~ s(PAR, k=18L) | Species, data = eco, verbose = FALSE, 
                cluster = eco$specimen)
-#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
-#> not all 'rhs' available
 plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
@@ -154,8 +150,8 @@ gam.check(gt2$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value   
-#> s(PAR):.tree2 17.00  7.73    0.92   0.010 **
-#> s(PAR):.tree3 17.00  6.58    0.92   0.025 * 
+#> s(PAR):.tree2 17.00  7.73    0.92   0.015 * 
+#> s(PAR):.tree3 17.00  6.58    0.92   0.010 **
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -167,8 +163,6 @@ We can also reduce the value of `k` to see if that yields less wiggly lines, and
 ``` r
 gt3 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, 
                cluster = eco$specimen, verbose = FALSE)
-#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
-#> not all 'rhs' available
 plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
@@ -254,8 +248,6 @@ Let's say would prefer to collapse nodes 4 and 5, because we do not think the di
 ``` r
 gt4 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, verbose = FALSE,
                cluster = eco$specimen, mob_ctrl = mob_control(maxdepth = 2L))
-#> Warning in formula.Formula(ff, lhs = 0, rhs = 3): subscript out of bounds,
-#> not all 'rhs' available
 ```
 
 Note that function `mob_control()` (from package **partykit**) is used here, to generate a `list` of control arguments for function `mob()`.
@@ -284,7 +276,7 @@ To estimate both the local and global models, an iterative approach is taken:
 -   Step 3: Repeat steps 1 and 2 untill convergence (i.e., change in log-likelihood values from one iteration to the next is smaller than `abstol`).
 
 ``` r
-gt5 <- gamtree(Pn ~ s(PAR, k=5L) | Species | noise + s(cluster_id, bs="re"),
+gt5 <- gamtree(Pn ~ s(PAR, k=5L) | noise + s(cluster_id, bs="re") | Species,
                data = eco, verbose = FALSE, cluster = eco$specimen)
 gt5$iterations
 #> [1] 2
@@ -386,7 +378,7 @@ Multiple predictor variables can be specified for the node-specific model, as is
 Specifying a predictor for the node-specific model which is known to be noise is not a good idea in the real world, but here we do it anyway for illustration purposes. We add a parametric (i.e., linear) effect of `noise` in the node-specific model:
 
 ``` r
-gt6 <- gamtree(Pn ~ s(PAR, k=5L) + noise | Species | s(cluster_id, bs="re"),
+gt6 <- gamtree(Pn ~ s(PAR, k=5L) + noise | s(cluster_id, bs="re") | Species,
                data = eco, verbose = FALSE, cluster = eco$specimen)
 summary(gt6)
 #> 
@@ -424,7 +416,7 @@ summary(gt6)
 We can also employ different functions than `s()` for the node-specific (or global) GAMs:
 
 ``` r
-gt9 <- gamtree(Pn ~ te(PAR, noise) | Species | s(cluster_id, bs="re"),
+gt9 <- gamtree(Pn ~ te(PAR, noise) | s(cluster_id, bs="re") | Species,
                data = eco, verbose = FALSE, 
                mob_ctrl = mob_control(maxdepth = 3L))
 summary(gt9)

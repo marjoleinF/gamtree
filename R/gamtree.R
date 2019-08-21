@@ -58,13 +58,24 @@ utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster"))
 #' fitted full GAM with both local and/or global fitted effects (in \code{$gamm}). 
 #' 
 #' @examples
-#' gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species | s(cluster_id, bs = "re") + noise, 
+#' gt <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
 #'               data = eco, cluster = eco$specimen, verbose = FALSE)
 #' summary(gt)
 #' 
 #' @import mgcv partykit Formula
 #' @importFrom stats as.formula formula logLik predict update terms
 #' @export
+# formula <- score ~ s(months) | s(CHILDID, bs = "re") | GENDER + RACE + WKSESL + 
+#   C1GMOTOR + C1FMOTOR + T1INTERN + T1EXTERN + T1INTERP + T1CONTRO + P1FIRKDG + 
+#   AGEBASELINE 
+# formula <- score ~ s(months) |  GENDER + RACE + WKSESL + 
+#   C1GMOTOR + C1FMOTOR + T1INTERN + T1EXTERN + T1INTERP + T1CONTRO + P1FIRKDG + 
+#   AGEBASELINE 
+# data <- traindata
+# weights <- cluster <- offset <- mob_ctrl <- NULL
+# abstol <- 0.001
+# verbose <- TRUE
+# method <- "REML"
 gamtree <- function(formula, data, weights = NULL, cluster = NULL, 
                     offset = NULL, abstol = 0.001, 
                     verbose = TRUE, method = "REML", mob_ctrl = NULL, 
@@ -81,23 +92,19 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
     mob_ctrl$ytype <- mob_ctrl$xtype <- "data.frame"
   }
   
-  ## Construct formulas for tree (tf), local gam (lgf), global gam (ggf):
+  ## Construct formulas for tree (tf), local gam (lgf) and global gam (ggf):
   ff <- as.Formula(formula)
-  lgf <- formula(ff, lhs = NULL, rhs = 1)   
-  local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
-  part_vars <- all.vars(formula(ff, lhs = 0, rhs = 2))
-  lgf
-  global_gam <- suppressWarnings(formula(ff, lhs = 0, rhs = 3) != "~0")  
+  lgf <- formula(ff, lhs = NULL, rhs = 1)
+  global_gam <- all(length(Formula(ff)) == c(1,3))
   if (global_gam) {
-    ggf <- formula(ff, lhs = NULL, rhs = 3)
+    local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
+    part_vars <- all.vars(formula(ff, lhs = 0, rhs = 3))
+    ggf <- formula(ff, lhs = NULL, rhs = 2)
   } else {
-    ggf <- formula(ff, lhs = 1, rhs = 0)
+    local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
+    part_vars <- all.vars(formula(ff, lhs = 0, rhs = 2))
+    ggf <- formula(ff, lhs = NULL, rhs = 0)
   }
-  formula(ff, lhs = 1, rhs = 0)
-  formula(ff, lhs = 0, rhs = 1)
-  formula(ff, lhs = 0, rhs = 2)
-  formula(ff, lhs = 0, rhs = 3)
-  
   response <- ff[[2]] 
   if (length(response) > 1L && is.call(response[1])) {
     response <- as.character(response)
@@ -269,7 +276,7 @@ summary.gamtree <- function(object, ...) {
 #' @param ... further arguments, currently not used. 
 #' 
 #' @examples 
-#' gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species | s(cluster_id, bs = "re") + noise, 
+#' gt <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
 #'               data = eco, verbose = FALSE, cluster = eco$specimen) 
 #' plot(gt, which = "tree") # fdefault is which = 'both'
 #' plot(gt, which = "nodes", residuals = TRUE)
@@ -367,8 +374,8 @@ predict.gamtree <- function(object, newdata = NULL, ...) {
     newdata <- object$data
   } else {
     newdata$.tree <- factor(predict(object$tree, newdata = newdata, 
-                                    type = "node"))
-    ## TODO: Need to include all levels present in original data?
+                                    type = "node"), 
+                            levels = levels(object$data$.tree))
   }
   ## TODO: Implement possibility of excluding local and/or global effects
   predict(object$gamm, newdata = newdata, ...)

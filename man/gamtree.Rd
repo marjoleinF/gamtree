@@ -60,7 +60,7 @@ variable is estimated, while accounting for globally specified smooth
 functions and random effects.
 }
 \examples{
-gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species | s(cluster_id, bs = "re") + noise, 
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
               data = eco, cluster = eco$specimen, verbose = FALSE)
 summary(gt)
 

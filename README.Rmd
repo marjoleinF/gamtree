@@ -54,21 +54,24 @@ The data contain `r nrow(eco)` observations. The `Species` variable is an indica
 
 ## Specifying the model formula 
 
-The model is specified through a three- or fourth-part formula, comprising a response variable, local (subgroup-specific) terms, partitiong variables and global terms. Informally written, a full four-part GAM tree formula can be described as: 
+The model is specified through a three- or fourth-part formula, comprising a response variable, local (subgroup-specific) terms, partitiong variables and global terms. Informally written, a full four-part GAM tree formula (with three-part left-hand side) can be described as:
 
 ```{r, eval = FALSE}
 response ~ local terms | partitioning variables | global terms
 ```
 
-The response must be a single continuous variable. The local terms, separated from the response by a tilde (`~`), can comprise one or more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. The partitioning variables, separated from the local terms by a vertical bar(`|`), are specified by providing their names. The global terms, separated from the partitioning variables by a vertical bar (`|`), can comprise one of more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. 
+The response must be a single continuous variable. The local terms, separated from the response by a tilde (`~`), can comprise one or more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. The partitioning variables, separated from the local terms by a vertical bar(`|`), are specified by providing their names. The global terms, separated from the partitioning variables by a vertical bar (`|`), can comprise one of more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`.
 
-One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on a subgroup structure based on the partitioning variables, which is estimated conditional on the estimated global terms. 
+One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on the estimated global terms, conditional on a subgroup structure based on the partitioning variables.
 
-It is not required to specify any global terms; they may simply be omitted. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms:
+It is not required to specify any global terms, they can simply be omitted by specifying only a two-part left-hand side. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms. The formula can be described as:
 
 ```{r, eval = FALSE}
 response ~ local terms | partitioning variables
 ```
+
+
+
 
  
 
@@ -223,7 +226,7 @@ To estimate both the local and global models, an iterative approach is taken:
 - Step 3: Repeat steps 1 and 2 untill convergence (i.e., change in log-likelihood values from one iteration to the next is smaller than `abstol`).
  
 ```{r}
-gt5 <- gamtree(Pn ~ s(PAR, k=5L) | Species | noise + s(cluster_id, bs="re"),
+gt5 <- gamtree(Pn ~ s(PAR, k=5L) | noise + s(cluster_id, bs="re") | Species,
                data = eco, verbose = FALSE, cluster = eco$specimen)
 gt5$iterations
 ```
@@ -272,7 +275,7 @@ Multiple predictor variables can be specified for the node-specific model, as is
 Specifying a predictor for the node-specific model which is known to be noise is not a good idea in the real world, but here we do it anyway for illustration purposes. We add a parametric (i.e., linear) effect of `noise` in the node-specific model:
 
 ```{r}
-gt6 <- gamtree(Pn ~ s(PAR, k=5L) + noise | Species | s(cluster_id, bs="re"),
+gt6 <- gamtree(Pn ~ s(PAR, k=5L) + noise | s(cluster_id, bs="re") | Species,
                data = eco, verbose = FALSE, cluster = eco$specimen)
 summary(gt6)
 ```
@@ -280,7 +283,7 @@ summary(gt6)
 We can also employ different functions than `s()` for the node-specific (or global) GAMs:
 
 ```{r}
-gt9 <- gamtree(Pn ~ te(PAR, noise) | Species | s(cluster_id, bs="re"),
+gt9 <- gamtree(Pn ~ te(PAR, noise) | s(cluster_id, bs="re") | Species,
                data = eco, verbose = FALSE, 
                mob_ctrl = mob_control(maxdepth = 3L))
 summary(gt9)
