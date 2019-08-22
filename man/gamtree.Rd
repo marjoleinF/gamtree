@@ -12,16 +12,20 @@ gamtree(formula, data, weights = NULL, cluster = NULL, offset = NULL,
 \arguments{
 \item{formula}{specifies the model formula, consisting of three or four 
 parts: the response variable followed by a tilde, the terms for the 
-node-specific GAM followed by a vertical bar, the partitioning variables 
-followed by a vertical bar, and optionally the terms for the global GAM. 
-See examples below.}
+node-specific GAM followed by a vertical bar, optionally the terms for 
+the global GAM followed by a vertical bar, and then the partitioning 
+variables. See examples below.}
 
 \item{data}{specifies the dataset (must be a data.frame).}
 
 \item{weights}{currently ignored! optional numeric vector of case weights.}
 
 \item{cluster}{optional numeric or factor vector with a cluster ID to be 
-passed employed for clustered covariances in the parameter stability tests.}
+passed employed for clustered covariances in the parameter stability tests.
+This argument should be used when the partitioning variables are not measured
+on the individual observation level, but on a higher level. E.g., when 
+the response variables consists of repeated measurements on multiple 
+observations and the partitioning variables are time-invariant covariates.}
 
 \item{offset}{currently ignored! numeric vector with an a priori known 
 component to be included
@@ -60,8 +64,13 @@ variable is estimated, while accounting for globally specified smooth
 functions and random effects.
 }
 \examples{
-gt <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
+## GAM tree without global terms:
+gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen, 
+              verbose = FALSE)
+summary(gt1)
+## GAM tree with global terms:
+gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
               data = eco, cluster = eco$specimen, verbose = FALSE)
-summary(gt)
+summary(gt2)
 
 }

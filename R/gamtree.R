@@ -26,13 +26,17 @@ utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster"))
 #' 
 #' @param formula specifies the model formula, consisting of three or four 
 #' parts: the response variable followed by a tilde, the terms for the 
-#' node-specific GAM followed by a vertical bar, the partitioning variables 
-#' followed by a vertical bar, and optionally the terms for the global GAM. 
-#' See examples below.
+#' node-specific GAM followed by a vertical bar, optionally the terms for 
+#' the global GAM followed by a vertical bar, and then the partitioning 
+#' variables. See examples below.
 #' @param data specifies the dataset (must be a data.frame).
 #' @param weights currently ignored! optional numeric vector of case weights.
 #' @param cluster optional numeric or factor vector with a cluster ID to be 
-#' passed employed for clustered covariances in the parameter stability tests.
+#' employed for clustered covariances in the parameter stability tests.
+#' This argument should be used when the partitioning variables are not measured
+#' on the individual observation level, but on a higher level. E.g., when 
+#' the response variables consists of repeated measurements on multiple 
+#' observations and the partitioning variables are time-invariant covariates.
 #' @param offset currently ignored! numeric vector with an a priori known 
 #' component to be included
 #' in the model \code{y ~ x1 + x2 + ....}. Will be applied to both the local
@@ -49,18 +53,23 @@ utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster"))
 #' @param mob_ctrl a list with control parameters as returned by \code{mob_control}
 #' to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
 #' `data.frame`, by default, and cannot be adjusted.)
-#' @param ... additional arguments to be passed the locally fitted \code{gam}s
-#' , through \code{mob()}'s fitting function (currently, the only option is the 
-#' default \code{gam_fit()}).
+#' @param ... additional arguments to be passed to the locally fitted 
+#' \code{gam}s, through \code{mob()}'s fitting function (currently, the only 
+#' option is the default \code{gam_fit()}).
 #' 
 #' @return Returns an object of class \code{"gamtree"}. This is a list, containing
 #' (amongst others) the GAM-based recursive partition (in \code{$tree}), and the 
 #' fitted full GAM with both local and/or global fitted effects (in \code{$gamm}). 
 #' 
 #' @examples
-#' gt <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
+#' ## GAM tree without global terms:
+#' gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen, 
+#'               verbose = FALSE)
+#' summary(gt1)
+#' ## GAM tree with global terms:
+#' gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
 #'               data = eco, cluster = eco$specimen, verbose = FALSE)
-#' summary(gt)
+#' summary(gt2)
 #' 
 #' @import mgcv partykit Formula
 #' @importFrom stats as.formula formula logLik predict update terms
