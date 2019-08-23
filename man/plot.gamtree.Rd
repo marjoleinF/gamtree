@@ -4,8 +4,9 @@
 \alias{plot.gamtree}
 \title{Plotting of GAM trees}
 \usage{
-\method{plot}{gamtree}(x, which = "both", treeplot_ctrl = list(),
-  gamplot_ctrl = list(), ...)
+\method{plot}{gamtree}(x, which = "both", which_terms = "both",
+  ylim = "firstnode", treeplot_ctrl = list(), gamplot_ctrl = list(),
+  ...)
 }
 \arguments{
 \item{x}{object of class \code{gamtree}.}
@@ -15,9 +16,24 @@ followed by the model fitted in the terminal nodes. Alternatively, \code{"tree"}
 will plot the tree structure only, and \code{"nodes"} will plot the terminal-node
 models only.}
 
-\item{treeplot_ctrl}{list of arguments to be passed to \code{plot.party()}.}
+\item{which_terms}{character; \code{"local"}, \code{"global"} or \code{"both"}.
+Specifies whether the local and/or global smooth terms should be plotted.}
 
-\item{gamplot_ctrl}{list of arguments to be passed to \code{plot,gam()}.}
+\item{ylim}{\code{"firstplot"} (default), \code{NULL}, or a numeric vector of 
+length 2. Only used for plotting the terminal-node models (not the tree). 
+Specifies how the limits of the y-axes of the terminal node plots 
+should be chosen. The default (\code{"firstnode"}) uses the observations 
+in the first node to determine the limits of the y-axes for all plots. 
+Alternatively, \\code{NULL} will determine the limits of the y-axes 
+separately for each plot. Alternatively, a numeric vector of length 
+two may be specified, specifying the lower and upper limits of the 
+y-axes.}
+
+\item{treeplot_ctrl}{list of (named) arguments to be passed to 
+\code{plot.party()}.}
+
+\item{gamplot_ctrl}{list of (named) arguments to be passed to 
+\code{plot,gam()}.}
 
 \item{...}{further arguments, currently not used.}
 }
@@ -29,6 +45,7 @@ terminal nodes of the tree.
 gt <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
               data = eco, verbose = FALSE, cluster = eco$specimen) 
 plot(gt, which = "tree") # fdefault is which = 'both'
-plot(gt, which = "nodes", residuals = TRUE)
+plot(gt, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
+
 
 }

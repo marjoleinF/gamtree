@@ -47,14 +47,12 @@ Specifying the model formula
 The model is specified through a three- or fourth-part formula, comprising a response variable, local (subgroup-specific) terms, partitiong variables and global terms. Informally written, a full four-part GAM tree formula (with three-part left-hand side) can be described as:
 
 ``` r
-response ~ local terms | partitioning variables | global terms
+response ~ local terms | global terms | partitioning variables
 ```
 
-The response must be a single continuous variable. The local terms, separated from the response by a tilde (`~`), can comprise one or more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. The partitioning variables, separated from the local terms by a vertical bar(`|`), are specified by providing their names. The global terms, separated from the partitioning variables by a vertical bar (`|`), can comprise one of more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`.
+The response must be a single continuous variable. The local terms, separated from the response by a tilde (`~`), can comprise one or more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. The global terms, separated from the local terms, can also comprise one of more smooth and/or parametric terms, as they would be specified in a model fitted with `gam()`. The partitioning variables, separated from the global terms by a vertical bar(`|`), are specified by providing their names. One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on the estimated global terms, conditional on a subgroup structure based on the partitioning variables.
 
-One can think of this GAM tree formulation as: the effects of the local terms are estimated, conditional on the estimated global terms, conditional on a subgroup structure based on the partitioning variables.
-
-It is not required to specify any global terms, they can simply be omitted by specifying only a two-part left-hand side. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms. The formula can be described as:
+It is not required to specify the global terms: they can simply be omitted by specifying only a two-part left-hand side. This yields a model with an estimated partition (subgroup structure) with subgroup-specific estimates of the (local) terms, without any global terms. The formula can then be described as:
 
 ``` r
 response ~ local terms | partitioning variables
@@ -112,10 +110,10 @@ gam.check(gt1$gamm)
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                 k'  edf k-index p-value   
-#> s(PAR):.tree2 9.00 7.14    0.93   0.025 * 
-#> s(PAR):.tree4 9.00 3.83    0.93   0.020 * 
-#> s(PAR):.tree5 9.00 6.82    0.93   0.010 **
+#>                 k'  edf k-index p-value  
+#> s(PAR):.tree2 9.00 7.14    0.93   0.035 *
+#> s(PAR):.tree4 9.00 3.83    0.93   0.020 *
+#> s(PAR):.tree5 9.00 6.82    0.93   0.035 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -150,8 +148,8 @@ gam.check(gt2$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value   
-#> s(PAR):.tree2 17.00  7.73    0.92   0.015 * 
-#> s(PAR):.tree3 17.00  6.58    0.92   0.010 **
+#> s(PAR):.tree2 17.00  7.73    0.92   0.010 **
+#> s(PAR):.tree3 17.00  6.58    0.92   0.015 * 
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```

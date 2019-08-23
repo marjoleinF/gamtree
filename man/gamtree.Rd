@@ -21,7 +21,7 @@ variables. See examples below.}
 \item{weights}{currently ignored! optional numeric vector of case weights.}
 
 \item{cluster}{optional numeric or factor vector with a cluster ID to be 
-passed employed for clustered covariances in the parameter stability tests.
+employed for clustered covariances in the parameter stability tests.
 This argument should be used when the partitioning variables are not measured
 on the individual observation level, but on a higher level. E.g., when 
 the response variables consists of repeated measurements on multiple 
@@ -48,9 +48,9 @@ See documentation of function \code{gam()} for details.}
 to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
 `data.frame`, by default, and cannot be adjusted.)}
 
-\item{...}{additional arguments to be passed the locally fitted \code{gam}s
-, through \code{mob()}'s fitting function (currently, the only option is the 
-default \code{gam_fit()}).}
+\item{...}{additional arguments to be passed to the locally fitted 
+\code{gam}s, through \code{mob()}'s fitting function (currently, the only 
+option is the default \code{gam_fit()}).}
 }
 \value{
 Returns an object of class \code{"gamtree"}. This is a list, containing
