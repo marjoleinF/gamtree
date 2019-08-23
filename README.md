@@ -112,7 +112,7 @@ gam.check(gt1$gamm)
 #> 
 #>                 k'  edf k-index p-value  
 #> s(PAR):.tree2 9.00 7.14    0.93   0.035 *
-#> s(PAR):.tree4 9.00 3.83    0.93   0.020 *
+#> s(PAR):.tree4 9.00 3.83    0.93   0.025 *
 #> s(PAR):.tree5 9.00 6.82    0.93   0.035 *
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -148,8 +148,8 @@ gam.check(gt2$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value   
-#> s(PAR):.tree2 17.00  7.73    0.92   0.010 **
-#> s(PAR):.tree3 17.00  6.58    0.92   0.015 * 
+#> s(PAR):.tree2 17.00  7.73    0.92    0.01 **
+#> s(PAR):.tree3 17.00  6.58    0.92    0.01 **
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
