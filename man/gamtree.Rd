@@ -5,9 +5,18 @@
 \title{Recursively partition a dataset based on a (local) GAM, while accounting for 
 globally specified GAM terms.}
 \usage{
-gamtree(formula, data, weights = NULL, cluster = NULL, offset = NULL,
-  abstol = 0.001, verbose = TRUE, method = "REML", mob_ctrl = NULL,
-  ...)
+gamtree(
+  formula,
+  data,
+  weights = NULL,
+  cluster = NULL,
+  offset = NULL,
+  abstol = 0.001,
+  verbose = TRUE,
+  method = "REML",
+  mob_ctrl = NULL,
+  ...
+)
 }
 \arguments{
 \item{formula}{specifies the model formula, consisting of three or four 

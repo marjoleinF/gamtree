@@ -113,6 +113,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
                 paste(part_vars, collapse = " + ")))
 
   ## Construct formulas for full gam (fgf):
+  ## _alt formula is for when tree has not splitted
   new_alt <- new <- attr(terms(lgf), "term.labels")
   new <- gsub(")", ", by = .tree)", new)
   new[!grepl(")", new)] <- paste0(new[!grepl(")", new)], ":.tree") 

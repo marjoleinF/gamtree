@@ -4,9 +4,15 @@
 \alias{plot.gamtree}
 \title{Plotting of GAM trees}
 \usage{
-\method{plot}{gamtree}(x, which = "both", which_terms = "both",
-  ylim = "firstnode", treeplot_ctrl = list(), gamplot_ctrl = list(),
-  ...)
+\method{plot}{gamtree}(
+  x,
+  which = "both",
+  which_terms = "both",
+  ylim = "firstnode",
+  treeplot_ctrl = list(),
+  gamplot_ctrl = list(),
+  ...
+)
 }
 \arguments{
 \item{x}{object of class \code{gamtree}.}
