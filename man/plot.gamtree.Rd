@@ -2,7 +2,7 @@
 % Please edit documentation in R/gamtree.R
 \name{plot.gamtree}
 \alias{plot.gamtree}
-\title{Plotting of GAM trees}
+\title{Plotting method for GAM trees}
 \usage{
 \method{plot}{gamtree}(
   x,
@@ -39,7 +39,7 @@ y-axes.}
 \code{plot.party()}.}
 
 \item{gamplot_ctrl}{list of (named) arguments to be passed to 
-\code{plot,gam()}.}
+\code{plot.gam()}.}
 
 \item{...}{further arguments, currently not used.}
 }

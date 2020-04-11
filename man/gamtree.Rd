@@ -3,18 +3,21 @@
 \name{gamtree}
 \alias{gamtree}
 \title{Recursively partition a dataset based on a (local) GAM, while accounting for 
-globally specified GAM terms.}
+global GAM terms.}
 \usage{
 gamtree(
   formula,
   data,
   weights = NULL,
   cluster = NULL,
+  joint = TRUE,
+  globalstart = FALSE,
   offset = NULL,
   abstol = 0.001,
   verbose = TRUE,
   method = "REML",
-  mob_ctrl = NULL,
+  bigdata = FALSE,
+  mob_ctrl = mob_control(),
   ...
 )
 }
@@ -36,12 +39,20 @@ on the individual observation level, but on a higher level. E.g., when
 the response variables consists of repeated measurements on multiple 
 observations and the partitioning variables are time-invariant covariates.}
 
-\item{offset}{currently ignored! numeric vector with an a priori known 
-component to be included
-in the model \code{y ~ x1 + x2 + ....}. Will be applied to both the local
-and global model and will not be updated in consecutive iterations.}
+\item{joint}{Should local models be re-estimated jointly along with the
+global model? Jointly re-estimating may yield a more accurate final model,
+and may need less iterations to converge, but likely yield longer computation
+times.}
 
-\item{abstol}{specifies the convergence criterion. If the log-likelihood 
+\item{globalstart}{Should estimation initialize with the global model? Defaults 
+\code{FALSE}, resulting in the tree (partition or subgroup structure) being 
+estimated, first. If set to \code{TRUE}, (ignored if no global part has been
+specified in the \code{formula}), the global part of the model will be estimated
+first.}
+
+\item{offset}{currently ignored.}
+
+\item{abstol}{numeric. Specifies the convergence criterion. If the log-likelihood 
 values of the full mixed-effects gam, from two consecutive iterations differ 
 less than abstol, estimation is halted.}
 
@@ -50,12 +61,18 @@ every iteration? If true, the iteration number, information on the
 splitting procedure, and the log-likelihood (with df) value of the fitted 
 full mixed-effects gam model is printed.}
 
-\item{method}{The smoothing parameter estimation method used by \code{gam()}.
-See documentation of function \code{gam()} for details.}
+\item{method}{character. Smoothing parameter estimation method used by \code{gam()}.
+See \code{\link[mgcv]{gam}} or \code{\link[mgcv]{bam}} for details.}
 
-\item{mob_ctrl}{a list with control parameters as returned by \code{mob_control}
-to be passed to function \code{mob()}. (Note that argument `xtype` is set to 
-`data.frame`, by default, and cannot be adjusted.)}
+\item{bigdata}{logical. Should function \code{\link[mgcv]{bam}} be used to fit
+the GAMs? Defaults to \code{FALSE}, resulting in function \code{\link[mgcv]{gam}} 
+being used for fitting the GAMs. \code{TRUE} will result in function 
+\code{\link[mgcv]{bam}} being used for fitting the GAMs.}
+
+\item{mob_ctrl}{a list with control parameters as returned by 
+\code{\link[partykit]{mob_control}} to be passed to function 
+\code{\link[partykit]{mob}}. Note: argument `xtype` is set to 
+`data.frame`, by default, and cannot be adjusted.}
 
 \item{...}{additional arguments to be passed to the locally fitted 
 \code{gam}s, through \code{mob()}'s fitting function (currently, the only 
@@ -64,13 +81,13 @@ option is the default \code{gam_fit()}).}
 \value{
 Returns an object of class \code{"gamtree"}. This is a list, containing
 (amongst others) the GAM-based recursive partition (in \code{$tree}), and the 
-fitted full GAM with both local and/or global fitted effects (in \code{$gamm}).
+fitted full GAM with both local and/or global fitted effects (in \code{$gamm},
+if terms for the global GAM were specified in \code{formula}).
 }
 \description{
 \code{gamtree} recursively partition a dataset based on a (local) GAM, in
-which a smooth function (thin plate regression spline) of a single predictor
-variable is estimated, while accounting for globally specified smooth 
-functions and random effects.
+which a smooth function (spline) of a single predictor variable is estimated, 
+while accounting for globally specified smooth functions and random effects.
 }
 \examples{
 ## GAM tree without global terms:

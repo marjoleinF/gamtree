@@ -2,7 +2,7 @@
 % Please edit documentation in R/gamtree.R
 \name{summary.gamtree}
 \alias{summary.gamtree}
-\title{Summary for a fitted GAM tree}
+\title{Summary method for a fitted GAM tree}
 \usage{
 \method{summary}{gamtree}(object, ...)
 }

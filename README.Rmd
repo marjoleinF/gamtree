@@ -274,7 +274,7 @@ summary(gt9)
 
 # To-do list
 
-- Programming: Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function).
+- Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function). Using `bam()` also allows for specifying the `coef` argument (initial values for model coefficients), which could be passed from the model in the current node.
 
 - Issue: The estimated smooths from the tree and the full GAM have similar, but not the same coefficients. Is that problematic? See section below.
 
@@ -350,3 +350,4 @@ gt2$tree[[2]]$node$info$object$scale
 gt2$tree[[4]]$node$info$object$scale
 gt2$tree[[5]]$node$info$object$scale
 ```
+
