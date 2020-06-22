@@ -12,7 +12,12 @@ optional. Some examples are provided below.
 For fitting the smooth and parametric terms, package **mgcv** is
 employed. For recursive partitioning, package **partykit** is employed.
 
-The package is experimental, much work needs to be done.
+The package is under development; much work and testing still needs to be done. The current version of the package can be installed as follows:
+
+```{r}
+library(devtools)
+install_github("marjoleinF/gamtree")
+```
 
 Examples
 ========
