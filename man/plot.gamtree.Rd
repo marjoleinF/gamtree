@@ -19,8 +19,8 @@
 
 \item{which}{character. The default (\code{"both"}) plots the tree structure, 
 followed by the model fitted in the terminal nodes. Alternatively, \code{"tree"}
-will plot the tree structure only, and \code{"nodes"} will plot the terminal-node
-models only.}
+will plot the tree structure only, and \code{"nodes"} will plot the smooths from
+the terminal-node-specific and global model.}
 
 \item{which_terms}{character; \code{"local"}, \code{"global"} or \code{"both"}.
 Specifies whether the local and/or global smooth terms should be plotted.}

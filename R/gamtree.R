@@ -86,9 +86,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
     local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
     part_vars <- all.vars(formula(ff, lhs = 0, rhs = 3))
     ggf <- formula(ff, lhs = NULL, rhs = 2)
-    global_vars <- all.vars(formula(ggf, lhs = 0))
-    global_factors <- names(data[ , global_vars])[
-      which(sapply(data[ , global_vars], class) == "factor")]
+    global_vars <- all.vars(formula(as.Formula(as.Formula(ggf), lhs = 0)))
   } else {
     local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
     part_vars <- all.vars(formula(ff, lhs = 0, rhs = 2))
@@ -225,57 +223,23 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
         }
       }
     
-      ## Obtain predictions of global parts of full model only:
+      ## Obtain predictions of global parts of full model
       if (iteration == 1L) {
-        keep_terms <- c()
-        ## Get global parametric terms: 
-        
-        if (sum(gamm$nsdf) > 0L) {
-          if (length(gamm$nsdf) > 1L) {
-            pstart <- attr(gamm$nsdf, "pstart")
-            ind <- rep(0, 0)
-            for (i in 1L:length(gamm$nsdf)) if (gamm$nsdf[i] > 0L) {
-              ind <- c(ind, pstart[i]:(pstart[i] + gamm$nsdf[i] - 1L))
-            }
-          } else {
-            pstart <- 1L
-            ind <- 1L:gamm$nsdf
-          }
-          par_terms <- names(gamm$coefficients[ind])
-          ## This needs to be fixed for factors (name of factor variable needs to be included, not dummy coded factors):
-          keep_terms <- par_terms[!grepl(".tree", par_terms, fixed = TRUE)]
-          for (i in global_factors) {
-            ## Omit dummy indicator names of factor variable:
-            keep_terms <- keep_terms[!grepl(i, keep_terms)]
-            ## Include name of factor variable:
-            keep_terms <- c(keep_terms, i)
-          }
-        }
-        
-        ## Get global smooth terms:
-        for (i in 1:length(gamm$smooth)) {
-          if (!grepl(":.tree", gamm$smooth[[i]]$label)) {
-            keep_terms <-  c(keep_terms, gamm$smooth[[i]]$label)    
-          }
-        }
+        keep_terms <- colnames(predict(gamm, newdata = data[1,], type = "terms"))
+        keep_terms <- keep_terms[!grepl(".tree", keep_terms)]
       }
-      if (length(inds <- which(keep_terms == "(Intercept)")) > 0L) {
-        keep_terms <- keep_terms[-inds]
+      if (length(tree) == 1L) {
+        ## keep only global terms:
+        keep_terms1 <- keep_terms
+        for (i in local_vars) {
+          keep_terms1 <- keep_terms[-grep(i, keep_terms)]
+        }
+        data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
+                                        terms = keep_terms1))
+      } else {
+        data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
+                                        terms = keep_terms))
       }
-      
-      if (length(tree) > 1L) {
-        ## TODO: Temporarily omit smooth terms that were included in tf / lgf!
-        #for (i in 1:length(tree[[1]]$node$info$object$smooth)) {
-        #  local_smooth_term <- tree[[1]]$node$info$object$smooth[[i]]$label
-        #  keep_terms[!grepl(keep_local_smooth_term, keep_terms, fixed = TRUE)]
-        #}
-        ##
-        ## TODO: Omit parametric terms that were included in tf / lgf!
-        ##
-      }  
-      
-      data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
-                                      terms = keep_terms))
       
       ## iteration information
       newloglik <- logLik(gamm)    
@@ -371,8 +335,8 @@ summary.gamtree <- function(object, ...) {
 #' @param x object of class \code{gamtree}.
 #' @param which character. The default (\code{"both"}) plots the tree structure, 
 #' followed by the model fitted in the terminal nodes. Alternatively, \code{"tree"}
-#' will plot the tree structure only, and \code{"nodes"} will plot the terminal-node
-#' models only.
+#' will plot the tree structure only, and \code{"nodes"} will plot the smooths from
+#' the terminal-node-specific and global model.
 #' @param which_terms character; \code{"local"}, \code{"global"} or \code{"both"}.
 #' Specifies whether the local and/or global smooth terms should be plotted.
 #' @param ylim \code{"firstplot"} (default), \code{NULL}, or a numeric vector of 
@@ -424,8 +388,9 @@ plot.gamtree <- function(x, which = "both", which_terms = "both",
       } else if (which_terms == "global") {
         number_of_plots <- length(global_GAM_term_ids)
       }
+      if (number_of_plots > 25) number_of_plots <- 25
       nrow <- ncol <- ceiling(sqrt(number_of_plots))
-      if (number_of_plots <= (nrow-1L)*ncol) nrow <- nrow - 1L
+      if (number_of_plots <- (nrow-1L)*ncol) nrow <- nrow - 1L
       par(mfrow = c(nrow, ncol))
       gamplot_ctrl[["x"]] <- x$gamm
       if (is.numeric(ylim) && length(ylim) == 2L) gamplot_ctrl[["ylim"]] <- ylim
