@@ -594,6 +594,7 @@ To-do list
 -   Issue: The estimated smooths from the tree and the full GAM have
     similar, but not the same coefficients. This is due to the 
     smoothing parameter being estimated locally in the tree, but
-    globally in the full GAM. See 'issues' folder.
+    globally in the full GAM. See issue in 'notes and documents' 
+    folder.
 
 -   Testing: Evaluate performance using real and simulated data.
