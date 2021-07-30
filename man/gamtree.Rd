@@ -14,7 +14,7 @@ gamtree(
   globalstart = FALSE,
   offset = NULL,
   abstol = 0.001,
-  verbose = TRUE,
+  verbose = FALSE,
   method = "REML",
   bigdata = FALSE,
   mob_ctrl = mob_control(),
@@ -50,7 +50,7 @@ estimated, first. If set to \code{TRUE}, (ignored if no global part has been
 specified in the \code{formula}), the global part of the model will be estimated
 first.}
 
-\item{offset}{currently ignored.}
+\item{offset}{currently ignored!}
 
 \item{abstol}{numeric. Specifies the convergence criterion. If the log-likelihood 
 values of the full mixed-effects gam, from two consecutive iterations differ 
@@ -86,17 +86,21 @@ if terms for the global GAM were specified in \code{formula}).
 }
 \description{
 \code{gamtree} recursively partition a dataset based on a (local) GAM, in
-which a smooth function (spline) of a single predictor variable is estimated, 
+which a smooth function (spline) of a predictor variable is estimated, 
 while accounting for globally specified smooth functions and random effects.
 }
 \examples{
 ## GAM tree without global terms:
-gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen, 
-              verbose = FALSE)
+gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
 summary(gt1)
+
 ## GAM tree with global terms:
 gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
-              data = eco, cluster = eco$specimen, verbose = FALSE)
+              data = eco, cluster = eco$specimen)
 summary(gt2)
 
+}
+\seealso{
+\code{\link{predict.gamtree}} \code{\link{plot.gamtree}} 
+\code{\link{coef.gamtree}} \code{\link{summary.gamtree}}
 }

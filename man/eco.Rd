@@ -4,7 +4,9 @@
 \name{eco}
 \alias{eco}
 \title{Example dataset from ecology to illustrate fitting partially additive GAMs}
-\format{A data frame with 628 observations and 5 variables}
+\format{
+A data frame with 628 observations and 5 variables
+}
 \usage{
 data(eco)
 }

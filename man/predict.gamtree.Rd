@@ -4,11 +4,11 @@
 \alias{predict.gamtree}
 \title{Predictions from fitted GAM tree
  
-Takes a fitted GAM tree (produced by \code{gamtree()} and produces 
+Takes a fitted GAM tree (produced by \code{gamtree()}) and produces 
 predictions given a new set of values for the model covariates,
 of for the original covariate values used for fitting the GAM tree.}
 \usage{
-\method{predict}{gamtree}(object, newdata = NULL, ...)
+\method{predict}{gamtree}(object, newdata = NULL, type = "link", ...)
 }
 \arguments{
 \item{object}{an object of class \code{gamtree}.}
@@ -16,6 +16,12 @@ of for the original covariate values used for fitting the GAM tree.}
 \item{newdata}{a \code{data.frame} containing the values of the model
 covariates for which predictions should be returned. The default 
 (\code{NULL}) returns predictions for the original training data.}
+
+\item{type}{character vector of length 1, specifying the type of prediction
+to be returned. \code{"link"} (the default) returns values on the scale
+of the linear predictor. Alternatively, \code{"response"} returns predictions
+on the scale of the response variable; \code{"node"} returns an integer vector
+of node identifiers.}
 
 \item{...}{further arguments to be passed to \code{predict.gam}.}
 }
@@ -25,7 +31,7 @@ Returns a vector of predicted values.
 \description{
 Predictions from fitted GAM tree
  
-Takes a fitted GAM tree (produced by \code{gamtree()} and produces 
+Takes a fitted GAM tree (produced by \code{gamtree()}) and produces 
 predictions given a new set of values for the model covariates,
 of for the original covariate values used for fitting the GAM tree.
 }

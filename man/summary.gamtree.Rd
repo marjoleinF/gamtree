@@ -14,3 +14,13 @@
 \description{
 Prints a summary of the local and/or global terms in a fitted GAM tree.
 }
+\examples{
+## GAM tree without global terms:
+gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
+summary(gt1)
+
+## GAM tree with global terms:
+gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
+              data = eco, cluster = eco$specimen)
+summary(gt2)
+}

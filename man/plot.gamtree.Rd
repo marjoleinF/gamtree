@@ -48,10 +48,14 @@ Takes a fitted GAM tree and plots the smooth functions fitted in each of the
 terminal nodes of the tree.
 }
 \examples{
-gt <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
-              data = eco, verbose = FALSE, cluster = eco$specimen) 
-plot(gt, which = "tree") # fdefault is which = 'both'
-plot(gt, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
+gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, 
+               cluster = eco$specimen) 
+plot(gt1, which = "tree") # default is which = 'both'
+plot(gt1, which = "nodes", gamplot_ctrl = list(residuals = TRUE)) 
+gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
+              data = eco, cluster = eco$specimen) 
+plot(gt2, which = "tree") # default is which = 'both'
+plot(gt2, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
 
 
 }
