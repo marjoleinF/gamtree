@@ -520,6 +520,13 @@ coef.gamtree <- function(object, which = "local", ...) {
 
 
 
+
+
+
+
+
+
+
 #' Predictions from fitted GAM tree
 #'  
 #' Takes a fitted GAM tree (produced by \code{gamtree()}) and produces 
