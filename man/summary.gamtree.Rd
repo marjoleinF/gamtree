@@ -14,6 +14,15 @@
 \description{
 Prints a summary of the local and/or global terms in a fitted GAM tree.
 }
+\section{Warning}{
+
+The printed results by default also provide standard error and significance
+tests. These should be taken with a big grain of salt, because they do NOT 
+account for the searching of the tree structure; they assume the tree structure 
+was known in advance. They thus should be interpreted as overly optimistic and
+with caution.
+}
+
 \examples{
 ## GAM tree without global terms:
 gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)

@@ -8,6 +8,7 @@
   x,
   which = "both",
   which_terms = "both",
+  dim = NULL,
   ylim = "firstnode",
   treeplot_ctrl = list(),
   gamplot_ctrl = list(),
@@ -19,27 +20,40 @@
 
 \item{which}{character. The default (\code{"both"}) plots the tree structure, 
 followed by the model fitted in the terminal nodes. Alternatively, \code{"tree"}
-will plot the tree structure only, and \code{"nodes"} will plot the smooths from
-the terminal-node-specific and global model.}
+will plot the tree structure, and \code{"terms"} will plot the smooth (and 
+parametric) terms from
+the terminal-node-specific and global model. Note that the fitted curves in 
+the tree do not convey a conditional function of the predictor on the $x$-axis
+(as plotted when "terms" is specified). They are a function of the predictor 
+on the $x$-axis, as well as all other predictors in the model and could thus be 
+referred to as 'marginal' fitted curves.}
 
 \item{which_terms}{character; \code{"local"}, \code{"global"} or \code{"both"}.
-Specifies whether the local and/or global smooth terms should be plotted.}
+Only used when argument \code{which} equal \code{"global"} or \code{"both"}.
+Specifies whether the local and/or global (smooth) terms should be plotted.}
+
+\item{dim}{numeric vector of length two. Specifies how many rows and columns 
+of plots should be fit on a single page.
+\code{NULL} (the default) has the routine leave all settings as they are.
+Using \code{par(mfrow = c( , ))} before plotting then provides control over 
+the plot dimensions (and number of pages).}
 
 \item{ylim}{\code{"firstplot"} (default), \code{NULL}, or a numeric vector of 
 length 2. Only used for plotting the terminal-node models (not the tree). 
 Specifies how the limits of the y-axes of the terminal node plots 
 should be chosen. The default (\code{"firstnode"}) uses the observations 
 in the first node to determine the limits of the y-axes for all plots. 
-Alternatively, \\code{NULL} will determine the limits of the y-axes 
+Alternatively, \code{NULL} will determine the limits of the y-axes 
 separately for each plot. Alternatively, a numeric vector of length 
 two may be specified, specifying the lower and upper limits of the 
 y-axes.}
 
 \item{treeplot_ctrl}{list of (named) arguments to be passed to 
-\code{plot.party()}.}
+\code{\link[partykit]{plot.party}}.}
 
 \item{gamplot_ctrl}{list of (named) arguments to be passed to 
-\code{plot.gam()}.}
+\code{\link[mgcv]{plot.gam}}. Note that not all arguments 
+of \code{plot.gam} are supported. .}
 
 \item{...}{further arguments, currently not used.}
 }
@@ -47,15 +61,23 @@ y-axes.}
 Takes a fitted GAM tree and plots the smooth functions fitted in each of the
 terminal nodes of the tree.
 }
+\section{Warning}{
+
+The plotted terms by default also represent confidence bands. These should
+be taken with a big grain of salt, because they do NOT account for the 
+searching of the tree structure; they assume the tree structure was
+known in advance. They should be interpreted as overly optimistic and with
+caution.
+}
+
 \examples{
 gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, 
                cluster = eco$specimen) 
 plot(gt1, which = "tree") # default is which = 'both'
-plot(gt1, which = "nodes", gamplot_ctrl = list(residuals = TRUE)) 
+plot(gt1, which = "terms", gamplot_ctrl = list(shade = TRUE)) 
 gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
               data = eco, cluster = eco$specimen) 
 plot(gt2, which = "tree") # default is which = 'both'
-plot(gt2, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
-
+plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE))
 
 }

@@ -1,0 +1,96 @@
+---
+output:
+  md_document:
+    variant: markdown_github
+---
+
+# To-do list
+
+- Add support for fitting GAMs using `bam()` instead of `gam()` (e.g., create `bam_fit` function, or include additional argument `type = c("gam", "bam")` in `gam_fit()` function). Using `bam()` also allows for specifying the `coef` argument (initial values for model coefficients), which could be passed from the model in the current node.
+
+- Issue: The estimated smooths from the tree and the full GAM have similar, but not the same coefficients. Is that problematic? See section below.
+
+- Testing: Evaluate performance using real and simulated data.
+
+- Allow for having an intercept-only model in the terminal nodes
+
+- Develop nicer summary and print methods
+
+
+
+# Issue: Different coefficient estimates
+
+```{r, message=FALSE, warning=FALSE}
+library("gamtree")
+gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, verbose = FALSE, 
+               cluster = eco$specimen)
+gt2 <- gamtree(Pn ~ s(PAR) | noise + s(cluster_id, bs="re") | Species,
+               data = eco, verbose = FALSE, cluster = eco$specimen)
+```
+
+The estimated coefficients from the final tree use the predictions based on global effects from the full GAM from the second-to-last iteration:
+
+```{r}
+coef(gt1)
+coef(gt1$tree)
+```
+
+The 'severity' of the differences between the estimated coefficients is difficult to judge. If we look at the plotted partial effects of the smooth terms, we see very similar, but not identical effects.
+
+The partial effects as estimated in the tree nodes:
+
+```{r}
+plot(gt2, which = "nodes", gamplot_ctrl = list(residuals = TRUE, ylim = c(-3.8, 4.2)))
+```
+
+The partial effects as estimated in the full GAM:
+
+```{r}
+par(mfrow = c(2, 2))
+plot(gt2$gamm, residuals = TRUE, ylim = c(-3.8, 4.2))
+```
+
+We can also compare the predicted values:
+
+```{r}
+newdat <- eco
+newdat$x <- newdat$PAR
+preds <- data.frame(gam = predict(gt2$gamm),
+                    tree = predict(gt2$tree, newdata = newdat, 
+                                   type = "response"))
+cor(preds)
+colMeans(preds)
+sapply(preds, var)
+sapply(preds, max)
+sapply(preds, min)
+cols <- c(rep("white", times = 2), "yellow", "orange", "white", 
+          "purple", "blue") 
+```
+
+The predicted values are very similar, but not identical.
+
+The differences are likely due to the different ways of estimating a smooth with the `by` argument specified (which is used for estimating the full GAM), and estimating separate smooths in each subgroup (which is done in estimating the partition with local GAMs). The scale and smoothing parameters differ between these two approaches:
+
+Smoothing and scale parameters for the full GAM:
+
+```{r}
+gt2$gamm$sp
+gt2$gamm$scale
+```
+
+For the GAMs in the terminal nodes, we obtain different values for the smoothing parameters:
+
+```{r}
+gt2$tree[[2]]$node$info$object$sp
+gt2$tree[[4]]$node$info$object$sp
+gt2$tree[[5]]$node$info$object$sp
+```
+
+This is probably due to a separate scale parameter being estimated in each node, instead of a single global one in the full GAM:
+
+```{r}
+gt2$tree[[2]]$node$info$object$scale
+gt2$tree[[4]]$node$info$object$scale
+gt2$tree[[5]]$node$info$object$scale
+```
+

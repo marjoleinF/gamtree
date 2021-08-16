@@ -5,10 +5,10 @@
 ## Fit GAM trees w/o global terms
 gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
 #saveRDS(coef(gt1), "prev_res/coef_gt1.RDS")
-saveRDS(gt1$tree[[1]]$node$info$test, "prev_res/gt1_teststat.RDS")
-saveRDS(gt1$tree[[1]]$node$info$coefficients, "prev_res/tree_coefs_gt1.RDS")
-saveRDS(gt1$gamm$coefficients, "prev_res/gamm_coefs_gt1.RDS")
-saveRDS(predict(gt1), "prev_res/preds_gt1.RDS")
+#saveRDS(gt1$tree[[1]]$node$info$test, "prev_res/gt1_teststat.RDS")
+#saveRDS(gt1$tree[[1]]$node$info$coefficients, "prev_res/tree_coefs_gt1.RDS")
+#saveRDS(gt1$gamm$coefficients, "prev_res/gamm_coefs_gt1.RDS")
+#saveRDS(predict(gt1), "prev_res/preds_gt1.RDS")
 
 gt1.1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco)
 
@@ -132,5 +132,17 @@ test_that("test predict.gamtree", {
   expect_equal(predict(gt2), readRDS("prev_res/preds_gt2.RDS"), tolerance = 1.49e-08)
   expect_equal(predict(gt3), readRDS("prev_res/preds_gt3.RDS"), tolerance = 1.49e-08)
   expect_equal(predict(gt4), readRDS("prev_res/preds_gt4.RDS"), tolerance = 1.49e-08)
+  
+})
+
+
+test_that("test plot.gamtree", {
+
+  expect_warning(expect_error(plot(gt1, which = "terms", which_terms = "global"), NA), NULL)
+  expect_warning(expect_error(plot(gt1.1, which = "both"), NA), NULL)
+  expect_warning(expect_error(plot(gt1.1, which = "terms", which_terms = "global"), NA), NULL)
+  expect_warning(expect_error(plot(gt2, which = "both"), NA), NULL)
+  expect_error(plot(gt3, which = "both"), NA)
+  expect_error(plot(gt4, which = "both"), NA)
   
 })

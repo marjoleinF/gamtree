@@ -1,10 +1,5 @@
 utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster", "current_offset"))
 
-## TODO: Check summary method for all joint and global combinations
-## TODO: Check predict method for all joint and global combinations
-## TODO: Check plot method for all joint and global combinations
-## TODO: Check print method for all joint and global combinations
-
 
 #' Recursively partition a dataset based on a (local) GAM, while accounting for 
 #' global GAM terms.
@@ -392,6 +387,12 @@ bamfit <- function(y, x, start = NULL, weights = NULL, offset = NULL,
 #'
 #' @param object object of class \code{gamtree}.
 #' @param ... further arguments to be passed to \code{summary.gam}.
+#' @section Warning:
+#' The printed results by default also provide standard error and significance
+#' tests. These should be taken with a big grain of salt, because they do NOT 
+#' account for the searching of the tree structure; they assume the tree structure 
+#' was known in advance. They thus should be interpreted as overly optimistic and
+#' with caution. 
 #' @export
 #' @examples
 #' ## GAM tree without global terms:
@@ -451,122 +452,142 @@ summary.gamtree <- function(object, ...) {
 #' @param x object of class \code{gamtree}.
 #' @param which character. The default (\code{"both"}) plots the tree structure, 
 #' followed by the model fitted in the terminal nodes. Alternatively, \code{"tree"}
-#' will plot the tree structure only, and \code{"nodes"} will plot the smooths from
-#' the terminal-node-specific and global model.
+#' will plot the tree structure, and \code{"terms"} will plot the smooth (and 
+#' parametric) terms from
+#' the terminal-node-specific and global model. Note that the fitted curves in 
+#' the tree do not convey a conditional function of the predictor on the $x$-axis
+#' (as plotted when "terms" is specified). They are a function of the predictor 
+#' on the $x$-axis, as well as all other predictors in the model and could thus be 
+#' referred to as 'marginal' fitted curves.
 #' @param which_terms character; \code{"local"}, \code{"global"} or \code{"both"}.
-#' Specifies whether the local and/or global smooth terms should be plotted.
+#' Only used when argument \code{which} equal \code{"global"} or \code{"both"}.
+#' Specifies whether the local and/or global (smooth) terms should be plotted.
+#' @param dim numeric vector of length two. Specifies how many rows and columns 
+#' of plots should be fit on a single page.
+#' \code{NULL} (the default) has the routine leave all settings as they are.
+#' Using \code{par(mfrow = c( , ))} before plotting then provides control over 
+#' the plot dimensions (and number of pages).
 #' @param ylim \code{"firstplot"} (default), \code{NULL}, or a numeric vector of 
 #' length 2. Only used for plotting the terminal-node models (not the tree). 
 #' Specifies how the limits of the y-axes of the terminal node plots 
 #' should be chosen. The default (\code{"firstnode"}) uses the observations 
 #' in the first node to determine the limits of the y-axes for all plots. 
-#' Alternatively, \\code{NULL} will determine the limits of the y-axes 
+#' Alternatively, \code{NULL} will determine the limits of the y-axes 
 #' separately for each plot. Alternatively, a numeric vector of length 
 #' two may be specified, specifying the lower and upper limits of the 
 #' y-axes.
 #' @param treeplot_ctrl list of (named) arguments to be passed to 
-#' \code{plot.party()}.
+#' \code{\link[partykit]{plot.party}}.
 #' @param gamplot_ctrl list of (named) arguments to be passed to 
-#' \code{plot.gam()}. 
+#' \code{\link[mgcv]{plot.gam}}. Note that not all arguments 
+#' of \code{plot.gam} are supported. . 
 #' @param ... further arguments, currently not used. 
 #' 
+#' @section Warning:
+#' The plotted terms by default also represent confidence bands. These should
+#' be taken with a big grain of salt, because they do NOT account for the 
+#' searching of the tree structure; they assume the tree structure was
+#' known in advance. They should be interpreted as overly optimistic and with
+#' caution. 
 #' @examples
 #' gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, 
 #'                cluster = eco$specimen) 
 #' plot(gt1, which = "tree") # default is which = 'both'
-#' plot(gt1, which = "nodes", gamplot_ctrl = list(residuals = TRUE)) 
+#' plot(gt1, which = "terms", gamplot_ctrl = list(shade = TRUE)) 
 #' gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
 #'               data = eco, cluster = eco$specimen) 
 #' plot(gt2, which = "tree") # default is which = 'both'
-#' plot(gt2, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
-#' 
+#' plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE))
 #' 
 #' @importFrom graphics plot par
 #' @export
-plot.gamtree <- function(x, which = "both", which_terms = "both", 
+plot.gamtree <- function(x, which = "both", which_terms = "both", dim = NULL,
                          ylim = "firstnode", treeplot_ctrl = list(), 
                          gamplot_ctrl = list(), ...) {
 
-  if (which != "nodes") {
-    ## Plot observed data in terminal nodes:
+  ## Argument checking
+  if (!which %in% c("tree", "terms", "both")) 
+    warning("Argument which should specify one of 'tree', 'terms' or 'both'")
+  if (!which_terms %in% c("local", "global", "both")) 
+    warning("Argument which_terms should specify one of 'local', 'global' or 'both'")
+  
+  ## Plot tree if requested
+  if (which != "terms") {
     treeplot_ctrl[["x"]] <- x$tree
     treeplot_ctrl[["terminal_panel"]] <- node_bivplot
     do.call(plot, treeplot_ctrl)
   }
+  
+  ## Plot GAM terms if requested
   if (which != "tree") {
     
-    ##todo: if there is no global gam:
-    if (is.null(x$gamm)) {
-      terminal_nodes <- unique(predict(x$tree))
-      for (i in terminal_nodes) {
-        plot(x$tree[[i]]$node$info$object)
-      }
-    } else {
-      joint <- is.null(x$call$joint)
-      if (!joint) joint <- x$call$joint
-      if (joint) {
-        smooth_term_labels <- dimnames(summary(x$gamm)$s.table)[[1]]
-        label_ids <- 1:length(smooth_term_labels)
-        local_GAM_term_ids <- grep(".tree", smooth_term_labels)
-        global_GAM_term_ids <- label_ids[!label_ids %in% local_GAM_term_ids]
-        if (which_terms == "local") {
-          number_of_plots <- length(terminal_nodes)
-        } else if (which_terms == "both") {
-          number_of_plots <- length(smooth_term_labels)
-        } else if (which_terms == "global") {
-          number_of_plots <- length(global_GAM_term_ids)
-        }
-        if (number_of_plots > 25) number_of_plots <- 25
-        nrow <- ncol <- ceiling(sqrt(number_of_plots))
-        if (number_of_plots <- (nrow-1L)*ncol) nrow <- nrow - 1L
-        par(mfrow = c(nrow, ncol))
-        gamplot_ctrl[["x"]] <- x$gamm
-        if (is.numeric(ylim) && length(ylim) == 2L) gamplot_ctrl[["ylim"]] <- ylim
-        if (which_terms != "global") {
-          terminal_nodes <- c()  
-          for (i in 1:length(x$tree)) {
-            if (is.null(x$tree[[i]]$node$kids)) terminal_nodes <- c(terminal_nodes, i)
-          }
-          for (i in 1:length(local_GAM_term_ids)) {
-            gamplot_ctrl[["select"]] <-  local_GAM_term_ids[i]
-            gamplot_ctrl[["main"]] <- paste("node", terminal_nodes[i])
-            if (i == 1L && !is.null(ylim)) {
-              tmp <- do.call(plot, gamplot_ctrl)
-              if (ylim[1L] == "firstnode") {
-                c(min(tmp[[1L]]$fit - .5*tmp[[1L]]$se.mult*tmp[[1L]]$se), 
-                  max(tmp[[1L]]$fit + .5*tmp[[1L]]$se.mult*tmp[[1L]]$se))
-              }
-            } else {
-              do.call(plot, gamplot_ctrl)        
+    ## Check if there is a global part to the GAM
+    global_gam <- all(length(as.Formula(x$call$formula)) == c(1, 3))
+    if (which_terms %in% c("global", "both") && !global_gam) {
+      warning("Fitted GAM tree does not contain global terms. Plots of local smooths will be returned only.")
+      which_terms <- "local"
+    }
+    
+    if (!is.null(dim)) par(mfrow = c(dim[1], dim[2]))
+    
+    if (x$joint) {
+      smooth_term_labels <- dimnames(summary(x$gamm)$s.table)[[1]]
+      label_ids <- 1:length(smooth_term_labels)
+      local_GAM_term_ids <- grep(".tree", smooth_term_labels)
+      global_GAM_term_ids <- label_ids[!label_ids %in% local_GAM_term_ids]
+      gamplot_ctrl[["x"]] <- x$gamm
+      if (is.numeric(ylim) && length(ylim) == 2L) gamplot_ctrl[["ylim"]] <- ylim
+      
+      if (which_terms != "global") {
+        ## Plot local smooths (and parametric terms)
+        ## TODO: Allow for having an intercept-only model in the terminal nodes
+        terminal_nodes <- unique(x$data$.tree)
+        for (i in 1:length(local_GAM_term_ids)) {
+          gamplot_ctrl[["select"]] <-  local_GAM_term_ids[i]
+          gamplot_ctrl[["main"]] <- paste("node", terminal_nodes[i])
+          if (i == 1L && !is.null(ylim)) {
+            tmp <- do.call(plot, gamplot_ctrl)
+            if (ylim[1L] == "firstnode") {
+              c(min(tmp[[1L]]$fit - .5*tmp[[1L]]$se.mult*tmp[[1L]]$se), 
+                max(tmp[[1L]]$fit + .5*tmp[[1L]]$se.mult*tmp[[1L]]$se))
             }
-          }
-        }
-        if (which_terms != "local" && length(global_GAM_term_ids) > 0L) {
-          for (i in 1:length(global_GAM_term_ids)) {
-            gamplot_ctrl[["select"]] <-  global_GAM_term_ids[i]
-            gamplot_ctrl[["main"]] <- paste("global term:", smooth_term_labels[global_GAM_term_ids[i]])
+          } else {
             do.call(plot, gamplot_ctrl)        
           }
         }
-      } else { ## joint is FALSE
-        ## TODO: Prepare par(mfrow = c(.., ..))
-        if (which_terms != "local") {
-          gamplot_ctrl[["x"]] <- x$gamm
-          do.call(plot, gamplot_ctrl)     
+      }
+      
+      if (which_terms != "local" && length(global_GAM_term_ids) > 0L) {
+        ## Plot global smooths (and parametric terms)
+        for (i in 1:length(global_GAM_term_ids)) {
+          gamplot_ctrl[["select"]] <-  global_GAM_term_ids[i]
+          gamplot_ctrl[["main"]] <- paste("global term:", smooth_term_labels[global_GAM_term_ids[i]])
+          do.call(plot, gamplot_ctrl)        
         }
-        if (which_terms != "global") {
-          terminal_nodes <- c()
-          for (i in 1:length(x$tree)) {
-            if (is.null(x$tree[[i]]$node$kids)) terminal_nodes <- c(terminal_nodes, i)
-          }
-          for (i in terminal_nodes) {
-            gamplot_ctrl[["x"]] <- x$tree[[i]]$node$info$object
-            gamplot_ctrl[["main"]] <- paste("node", i)
-            do.call(plot, gamplot_ctrl)   
-          }
+      }
+      
+    } else { ## joint is FALSE
+      
+      ## Plot global terms if requested
+      if (which_terms != "local") {
+        gamplot_ctrl[["x"]] <- x$gamm
+        do.call(plot, gamplot_ctrl)     
+      }
+      
+      ## Plot local terms if requested
+      if (which_terms != "global") {
+        terminal_nodes <- c()
+        for (i in 1:length(x$tree)) {
+          if (is.null(x$tree[[i]]$node$kids)) terminal_nodes <- c(terminal_nodes, i)
+        }
+        for (i in terminal_nodes) {
+          gamplot_ctrl[["x"]] <- x$tree[[i]]$node$info$object
+          gamplot_ctrl[["main"]] <- paste("node", i)
+          do.call(plot, gamplot_ctrl)   
         }
       }
     }
+    
   }
 }
 
