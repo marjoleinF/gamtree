@@ -15,22 +15,30 @@ gamtree(
   offset = NULL,
   abstol = 0.001,
   verbose = FALSE,
-  method = "REML",
-  bigdata = FALSE,
+  maxit = 100,
+  bam = FALSE,
+  gam_ctrl = list(),
   mob_ctrl = mob_control(),
+  alt_formula = NULL,
   ...
 )
 }
 \arguments{
 \item{formula}{specifies the model formula, consisting of three or four 
-parts: the response variable followed by a tilde, the terms for the 
-node-specific GAM followed by a vertical bar, optionally the terms for 
-the global GAM followed by a vertical bar, and then the partitioning 
-variables. See examples below.}
+parts: the response variable followed by a tilde ('~'); the terms for the 
+node-specific (local) GAMs, followed by a vertical bar ('|'); the global GAM terms followed 
+by a vertical bar (this global part is optional!), and then the potential 
+partitioning variables (separated by a '+'). The 'by' argument of function
+\code{\link[mgcv]{s}} may NOT be used in the node-specific GAM formulation. Refrain from
+using the dot ('.') to specify all remaining variables in \code{data}, this may yield
+unexpected results; make sure to specify each variable in the corresponding part
+of the model formula. See Examples.}
 
-\item{data}{specifies the dataset (must be a data.frame).}
+\item{data}{\code{data.frame} containing the variables specified in \code{formula}.}
 
-\item{weights}{currently ignored! optional numeric vector of case weights.}
+\item{weights}{numeric vector of length \code{nrow(data)}; optional case weights.
+A weight of 2, for example, is equivalent to having made exactly the same 
+observation twice.}
 
 \item{cluster}{optional numeric or factor vector with a cluster ID to be 
 employed for clustered covariances in the parameter stability tests.
@@ -41,8 +49,13 @@ observations and the partitioning variables are time-invariant covariates.}
 
 \item{joint}{Should local models be re-estimated jointly along with the
 global model? Jointly re-estimating may yield a more accurate final model,
-and may need less iterations to converge, but likely yield longer computation
-times.}
+and may need less iterations to converge. A possible advantage of joint 
+re-estimation of the local, node-specific models is that the same smoothing and 
+scale parameters will be employed within each smooth term. If the local spline 
+models are estimated separately within each node, they will obtain a different
+scale and smoothing parameter in each node. It however depends on the data
+problem at hand if smoothing and scale parameters should be estimated 
+locally (i.e., separately for each node), or globally.}
 
 \item{globalstart}{Should estimation initialize with the global model? Defaults 
 \code{FALSE}, resulting in the tree (partition or subgroup structure) being 
@@ -50,39 +63,52 @@ estimated, first. If set to \code{TRUE}, (ignored if no global part has been
 specified in the \code{formula}), the global part of the model will be estimated
 first.}
 
-\item{offset}{currently ignored!}
+\item{offset}{numeric vector of length \code{nrow(data)}. Supplies model 
+offset for use in fitting. Note that this offset will always be completely 
+ignored when predicting.}
 
 \item{abstol}{numeric. Specifies the convergence criterion. If the log-likelihood 
-values of the full mixed-effects gam, from two consecutive iterations differ 
-less than abstol, estimation is halted.}
+values of the full GAM (with both local and global components), differ less than 
+abstol between two consecutive iterations, estimation is halted.}
 
 \item{verbose}{logical. Should progress be printed to the commande line in 
 every iteration? If true, the iteration number, information on the 
 splitting procedure, and the log-likelihood (with df) value of the fitted 
 full mixed-effects gam model is printed.}
 
-\item{method}{character. Smoothing parameter estimation method used by \code{gam()}.
-See \code{\link[mgcv]{gam}} or \code{\link[mgcv]{bam}} for details.}
+\item{maxit}{numeric. The maximum number of iterations to be performed in 
+estimation of the model tree.}
 
-\item{bigdata}{logical. Should function \code{\link[mgcv]{bam}} be used to fit
+\item{bam}{logical. Should function \code{\link[mgcv]{bam}} be used to fit
 the GAMs? Defaults to \code{FALSE}, resulting in function \code{\link[mgcv]{gam}} 
 being used for fitting the GAMs. \code{TRUE} will result in function 
 \code{\link[mgcv]{bam}} being used for fitting the GAMs.}
+
+\item{gam_ctrl}{a list of fit control parameters to replace defaults returned by 
+\code{\link[mgcv]{gam.control}}. Values not set assume default values.}
 
 \item{mob_ctrl}{a list with control parameters as returned by 
 \code{\link[partykit]{mob_control}} to be passed to function 
 \code{\link[partykit]{mob}}. Note: argument `xtype` is set to 
 `data.frame`, by default, and cannot be adjusted.}
 
-\item{...}{additional arguments to be passed to the locally fitted 
-\code{gam}s, through \code{mob()}'s fitting function (currently, the only 
-option is the default \code{gam_fit()}).}
+\item{alt_formula}{list with two elements, for specifying non=standard model formulea
+for GAM. E.g., the formula list required for use of the \code{\link[mgcv]{multinom}}
+family.}
+
+\item{...}{additional arguments to be passed to function \code{\link[mgcv]{gam}} 
+(or \code{\link[mgcv]{bam}}). The same arguments will be employed for the local
+(node-specific) GAMs, and the global GAM (if specified in the model \code{formula}).}
 }
 \value{
 Returns an object of class \code{"gamtree"}. This is a list, containing
 (amongst others) the GAM-based recursive partition (in \code{$tree}), and the 
-fitted full GAM with both local and/or global fitted effects (in \code{$gamm},
-if terms for the global GAM were specified in \code{formula}).
+fitted full GAM model with local and/or global fitted effects (in \code{$gamm}. 
+The following methods are available to extract information from the fitted object:
+\code{\link{predict.gamtree}}, for obtaining predicted values for training and new
+observations; \code{\link{plot.gamtree}} for plotting the tree and variables' effects; 
+\code{\link{coef.gamtree}} for obtaining the estimated coefficients; 
+\code{\link{summary.gamtree}} for a summary of the fitted model.
 }
 \description{
 \code{gamtree} recursively partition a dataset based on a (local) GAM, in
