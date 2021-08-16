@@ -99,7 +99,7 @@ gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, cluster = eco$specimen)
 
 We can inspect the partition by plotting the tree (see `?plot.gamtree` for more info):
 
-```{r}
+```{r, fig.width=6, fig.height=6}
 plot(gt1, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
@@ -109,7 +109,7 @@ The plots indicate similar trajectories in all three terminal nodes, revealing a
 
 Note that the red curves represent the fitted (predicted) values of the observations. They appear quite wiggly, because they reflect marginal effects, which are heavily influenced by where data was observed, and where it was not. To obtain a better view of the fitted splines, it is better to inspect the (probably more familiar) conditional effects of the fitted GAM(s). We can plot these as follows:
 
-```{r, fig.width = 7, fig.height = 7}
+```{r, fig.width = 6, fig.height = 6}
 par(mfrow = c(2, 2))
 plot(gt1, which = "terms", which_terms = "local", gamplot_ctrl = list(shade = TRUE))
 ```
@@ -159,7 +159,7 @@ Note that by default, the `coef` method returns the local (node-specific) estima
 
 We can plot the tree and the models fitted in each of the terminal nodes:
 
-```{r}
+```{r, fig.width=6, fig.height=6}
 plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 par(mfrow = c(2, 2))
 plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE))
@@ -181,7 +181,7 @@ By default, `gam.check()` also yields residual plots, which are omitted here. Th
 
 Based on the `gam.check()` function results, we could increase the value of `k`, to see if that increases the reported `edf` substantially:
 
-```{r}
+```{r, fig.width=6, fig.height=6}
 gt3 <- gamtree(Pn ~ s(PAR, k=18L) | noise + s(cluster_id, bs = "re") | Species, 
                data = eco, cluster = eco$specimen)
 plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
@@ -199,15 +199,15 @@ The `edf` values have not increased substantially and the `k-index` values are s
 
 We can also reduce the value of `k` to see if that yields less wiggly lines, and perhaps a different tree:
 
-```{r}
+```{r, fig.width = 6, fig.height=6}
 gt4 <- gamtree(Pn ~ s(PAR, k=5L) | noise + s(cluster_id, bs="re") | Species,
                data = eco, cluster = eco$specimen, verbose = FALSE)
 plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
 
-```{r, fig.width = 5, fig.height=3.5}
-par(mfrow = c(1, 2))
+```{r, fig.width = 6, fig.height=6}
+par(mfrow = c(2, 2))
 plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE))
 ```
 
@@ -256,7 +256,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 
 We inspect the result:
 
-```{r}
+```{r, fig.width = 6, fig.height=6}
 plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
