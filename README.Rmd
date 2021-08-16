@@ -21,7 +21,7 @@ For fitting the smooth and parametric terms, package **mgcv** is employed. For r
 
 The package is under development; much work and testing still needs to be done. The current version of the package can be installed as follows:
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 library(devtools)
 install_github("marjoleinF/gamtree")
 ```
@@ -101,8 +101,9 @@ The plots indicate similar trajectories in all three terminal nodes, revealing a
 
 Alternatively, we can also plot the fitted GAMs in each of the terminal nodes, which reveals a similar pattern:
 
-```{r}
-plot(gt1, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
+```{r, fig.width = 3, fig.height = 2}
+par(mfrow = c(2,2))
+plot(gt1, which = "nodes")
 ```
 
 We used the `gamplot_ctrl` argument to pass additional arguments to function `plot.gam()`. We specified the `residuals` argument, so that partial residuals are included as dots in the plotted smooths.

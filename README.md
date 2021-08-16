@@ -16,25 +16,7 @@ be done. The current version of the package can be installed as follows:
 
 ``` r
 library(devtools)
-#> Loading required package: usethis
 install_github("marjoleinF/gamtree")
-#> WARNING: Rtools is required to build R packages, but is not currently installed.
-#> 
-#> Please download and install Rtools 4.0 from https://cran.r-project.org/bin/windows/Rtools/.
-#> Downloading GitHub repo marjoleinF/gamtree@HEAD
-#> WARNING: Rtools is required to build R packages, but is not currently installed.
-#> 
-#> Please download and install Rtools 4.0 from https://cran.r-project.org/bin/windows/Rtools/.
-#>          checking for file 'C:\Users\fokkemam\AppData\Local\Temp\RtmpYHqUuI\remotes7a80361d2525\marjoleinF-gamtree-1d9c97d/DESCRIPTION' ...  v  checking for file 'C:\Users\fokkemam\AppData\Local\Temp\RtmpYHqUuI\remotes7a80361d2525\marjoleinF-gamtree-1d9c97d/DESCRIPTION'
-#>       -  preparing 'gamtree':
-#>    checking DESCRIPTION meta-information ...     checking DESCRIPTION meta-information ...   v  checking DESCRIPTION meta-information
-#>       -  checking for LF line-endings in source and make files and shell scripts
-#>   -  checking for empty or unneeded directories
-#>       -  building 'gamtree_0.0.1.tar.gz'
-#>      
-#> 
-#> Installing package into 'C:/Users/fokkemam/Documents/R/win-library/4.1'
-#> (as 'lib' is unspecified)
 ```
 
 # Examples
@@ -149,10 +131,11 @@ Alternatively, we can also plot the fitted GAMs in each of the terminal
 nodes, which reveals a similar pattern:
 
 ``` r
-plot(gt1, which = "nodes", gamplot_ctrl = list(residuals = TRUE))
+par(mfrow = c(2,2))
+plot(gt1, which = "nodes")
 ```
 
-![](inst/README-figures/README-unnamed-chunk-10-1.png)![](inst/README-figures/README-unnamed-chunk-10-2.png)![](inst/README-figures/README-unnamed-chunk-10-3.png)
+![](inst/README-figures/README-unnamed-chunk-10-1.png)![](inst/README-figures/README-unnamed-chunk-10-2.png)
 
 We used the `gamplot_ctrl` argument to pass additional arguments to
 function `plot.gam()`. We specified the `residuals` argument, so that
@@ -212,24 +195,24 @@ summary(gt2)
 #> 
 #> Parametric coefficients:
 #>         Estimate Std. Error t value Pr(>|t|)    
-#> .tree2  3.704028   0.063862  58.000   <2e-16 ***
-#> .tree4  4.708579   0.121116  38.876   <2e-16 ***
-#> .tree5  5.228896   0.117634  44.451   <2e-16 ***
-#> noise  -0.009573   0.044443  -0.215     0.83    
+#> .tree2  3.704214   0.063878  57.989   <2e-16 ***
+#> .tree4  4.709721   0.120736  39.009   <2e-16 ***
+#> .tree5  5.288446   0.119991  44.074   <2e-16 ***
+#> noise  -0.003047   0.044132  -0.069    0.945    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
 #>                 edf Ref.df      F p-value    
-#> s(PAR):.tree2 7.163  8.118 28.383  <2e-16 ***
-#> s(PAR):.tree4 3.924  4.542 23.473  <2e-16 ***
-#> s(PAR):.tree5 6.682  7.482 34.041  <2e-16 ***
-#> s(cluster_id) 5.420 20.000  0.371    0.13    
+#> s(PAR):.tree2 8.136  8.779 27.621  <2e-16 ***
+#> s(PAR):.tree4 6.532  7.612 15.197  <2e-16 ***
+#> s(PAR):.tree5 8.520  8.897 31.232  <2e-16 ***
+#> s(cluster_id) 5.863 20.000  0.404   0.126    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> R-sq.(adj) =   0.56   Deviance explained = 57.9%
-#> -REML = 1022.5  Scale est. = 1.339     n = 628
+#> R-sq.(adj) =  0.572   Deviance explained = 93.9%
+#> GCV = 1.3767  Scale est. = 1.3043    n = 628
 ```
 
 Note that the standard errors and degrees of freedom for the smooth and
@@ -246,17 +229,17 @@ estimated random-effects coefficients being close to zero:
 ``` r
 coef(gt2, which = 'global')
 #>            noise  s(cluster_id).1  s(cluster_id).2  s(cluster_id).3 
-#>     -0.009572879     -0.004188756      0.034801336     -0.030516826 
+#>     -0.003047441     -0.008674167      0.042105978     -0.036189299 
 #>  s(cluster_id).4  s(cluster_id).5  s(cluster_id).6  s(cluster_id).7 
-#>     -0.055095623     -0.094127284      0.015228154      0.051448897 
+#>     -0.049712331     -0.098617797      0.005462097      0.051710536 
 #>  s(cluster_id).8  s(cluster_id).9 s(cluster_id).10 s(cluster_id).11 
-#>     -0.103460990      0.088769835     -0.030876592      0.034950115 
+#>     -0.113024023      0.094820532     -0.029792470      0.034134724 
 #> s(cluster_id).12 s(cluster_id).13 s(cluster_id).14 s(cluster_id).15 
-#>      0.051790879      0.001446386     -0.075645504      0.118519437 
+#>      0.078520126     -0.013173338     -0.063299134      0.124354355 
 #> s(cluster_id).16 s(cluster_id).17 s(cluster_id).18 s(cluster_id).19 
-#>     -0.053155464      0.128132937      0.079411719     -0.080637216 
+#>     -0.080836468      0.133251777      0.092947013     -0.076822763 
 #> s(cluster_id).20 s(cluster_id).21 
-#>     -0.028356145     -0.048439297
+#>     -0.031911034     -0.055254312
 ```
 
 Note that by default, the `coef` method returns the local
@@ -294,21 +277,20 @@ the dimension of the basis used to represent the smooth term:
 ``` r
 gam.check(gt2$gamm)
 #> 
-#> Method: REML   Optimizer: outer newton
-#> full convergence after 7 iterations.
-#> Gradient range [-0.0003974739,0.0005464636]
-#> (score 1022.483 & scale 1.338975).
-#> Hessian positive definite, eigenvalue range [0.3087284,310.5868].
+#> Method: GCV   Optimizer: magic
+#> Smoothing parameter selection converged after 21 iterations.
+#> The RMS GCV score gradient at convergence was 5.447511e-07 .
+#> The Hessian was positive definite.
 #> Model rank =  52 / 52 
 #> 
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                  k'   edf k-index p-value   
-#> s(PAR):.tree2  9.00  7.16    0.92    0.01 **
-#> s(PAR):.tree4  9.00  3.92    0.92    0.02 * 
-#> s(PAR):.tree5  9.00  6.68    0.92    0.02 * 
-#> s(cluster_id) 21.00  5.42      NA      NA   
+#>                  k'   edf k-index p-value  
+#> s(PAR):.tree2  9.00  8.14    0.92   0.015 *
+#> s(PAR):.tree4  9.00  6.53    0.92   0.015 *
+#> s(PAR):.tree5  9.00  8.52    0.92   0.040 *
+#> s(cluster_id) 21.00  5.86      NA      NA  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -342,20 +324,19 @@ We again apply the `gam.check()` function:
 ``` r
 gam.check(gt3$gamm)
 #> 
-#> Method: REML   Optimizer: outer newton
-#> full convergence after 5 iterations.
-#> Gradient range [-1.881864e-05,7.260487e-07]
-#> (score 1026.371 & scale 1.382285).
-#> Hessian positive definite, eigenvalue range [1.031713,311.6001].
+#> Method: GCV   Optimizer: magic
+#> Smoothing parameter selection converged after 6 iterations.
+#> The RMS GCV score gradient at convergence was 2.05892e-07 .
+#> The Hessian was positive definite.
 #> Model rank =  58 / 58 
 #> 
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                  k'   edf k-index p-value    
-#> s(PAR):.tree2 17.00  7.79    0.92  <2e-16 ***
-#> s(PAR):.tree3 17.00  6.58    0.92    0.01 ** 
-#> s(cluster_id) 21.00  6.85      NA      NA    
+#>                  k'   edf k-index p-value  
+#> s(PAR):.tree2 17.00  9.42    0.93    0.03 *
+#> s(PAR):.tree3 17.00  8.11    0.93    0.03 *
+#> s(cluster_id) 21.00  7.51      NA      NA  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -401,25 +382,23 @@ summary(gt4)
 #>     bs = "re") - 1
 #> 
 #> Parametric coefficients:
-#>         Estimate Std. Error t value Pr(>|t|)    
-#> .tree2  3.703917   0.064539  57.391   <2e-16 ***
-#> .tree4  4.706337   0.125471  37.509   <2e-16 ***
-#> .tree5  5.203145   0.120562  43.157   <2e-16 ***
-#> noise  -0.003279   0.046201  -0.071    0.943    
+#>        Estimate Std. Error t value Pr(>|t|)    
+#> .tree2 3.705306   0.066882  55.401   <2e-16 ***
+#> .tree3 4.954916   0.090711  54.623   <2e-16 ***
+#> noise  0.002525   0.046758   0.054    0.957    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
 #>                 edf Ref.df      F p-value    
-#> s(PAR):.tree2 3.868  3.987 44.872  <2e-16 ***
-#> s(PAR):.tree4 3.104  3.535 25.483  <2e-16 ***
-#> s(PAR):.tree5 3.846  3.982 53.152  <2e-16 ***
-#> s(cluster_id) 4.039 20.000  0.254   0.201    
+#> s(PAR):.tree2 3.934  3.996 44.540  <2e-16 ***
+#> s(PAR):.tree3 3.943  3.997 71.043  <2e-16 ***
+#> s(cluster_id) 4.993 20.000  0.328   0.165    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> R-sq.(adj) =  0.517   Deviance explained = 53.1%
-#> -REML = 1036.7  Scale est. = 1.4711    n = 628
+#> R-sq.(adj) =  0.505   Deviance explained = 92.7%
+#> GCV = 1.5481  Scale est. = 1.509     n = 628
 ```
 
 Note that the standard errors and degrees of freedom for the smooth and
@@ -442,10 +421,9 @@ nodes:
 
 ``` r
 coef(gt4)
-#>   (Intercept)  s(PAR).1   s(PAR).2  s(PAR).3 s(PAR).4
-#> 2    3.703917 -1.931528  -7.317267  5.858086 3.052829
-#> 4    4.706337 -1.498927  -2.958605  2.829858 2.725435
-#> 5    5.203145 -4.159471 -12.730339 10.560749 6.384956
+#>   (Intercept)  s(PAR).1   s(PAR).2 s(PAR).3 s(PAR).4
+#> 2    3.705306 -1.969473  -7.701159 6.119865 3.120238
+#> 3    4.954916 -3.215327 -11.095423 8.926559 5.181505
 ```
 
 We can do an additional check on the observation-level contributions to
@@ -455,12 +433,10 @@ These sums should be reasonably close to zero:
 
 ``` r
 check_grad(gt4)
-#>     (Intercept)   s(PAR).1   s(PAR).2     s(PAR).3      s(PAR).4
-#> 1 -1.328514e-12 -0.2229052 -0.3263868 -0.062062577  2.233179e-13
-#> 2  5.329686e-13 -0.2310867 -0.3937828 -0.073902025  5.143761e-13
-#> 3  1.378203e-13  0.2108973  0.2446822 -0.031231124  3.154733e-13
-#> 4 -2.010545e-13  0.5391678 -0.3921504 -0.001776875 -1.833637e-13
-#> 5  1.756460e-13 -0.1995831 -0.1948963 -0.025229130  5.905346e-14
+#>     (Intercept)    s(PAR).1   s(PAR).2    s(PAR).3      s(PAR).4
+#> 1  1.090544e-12 -0.09819859 -0.1477924 -0.02848232 -2.056674e-12
+#> 2 -1.463320e-12 -0.09638620 -0.1707915 -0.03246162 -2.934272e-13
+#> 3 -2.419072e-14  0.08936639  0.1123353 -0.01591724  9.671812e-13
 ```
 
 The sum of the gradient contributions seem reasonably close to zero.
@@ -495,10 +471,10 @@ contributions are reasonably close to zero:
 
 ``` r
 check_grad(gt5)
-#>     (Intercept)   s(PAR).1   s(PAR).2    s(PAR).3     s(PAR).4
-#> 1 -1.328514e-12 -0.2229052 -0.3263868 -0.06206258 2.233179e-13
-#> 2  5.329686e-13 -0.2310867 -0.3937828 -0.07390202 5.143761e-13
-#> 3  1.378203e-13  0.2108973  0.2446822 -0.03123112 3.154733e-13
+#>     (Intercept)    s(PAR).1   s(PAR).2    s(PAR).3      s(PAR).4
+#> 1  3.637923e-13 -0.09585712 -0.1470034 -0.02843551 -3.881347e-12
+#> 2 -2.455432e-12 -0.09300438 -0.1695259 -0.03259946  1.876023e-13
+#> 3 -4.673037e-13  0.08903445  0.1126072 -0.01573966  1.009860e-12
 ```
 
 the observation-wise gradient contributions sum to values reasonably
@@ -526,37 +502,33 @@ illustration purposes. We add a parametric (i.e., linear) effect of
 ``` r
 gt6 <- gamtree(Pn ~ s(PAR, k=5L) + noise | s(cluster_id, bs="re") | Species,
                data = eco, verbose = FALSE, cluster = eco$specimen)
+#> Warning in gamtree(Pn ~ s(PAR, k = 5L) + noise | s(cluster_id, bs = "re") | : It
+#> appears more than 1 term has been specified for the node-specific (local) GAM.
+#> This may lead to unexpected results.
 summary(gt6)
 #> 
 #> Family: gaussian 
 #> Link function: identity 
 #> 
 #> Formula:
-#> Pn ~ .tree + s(PAR, k = 5, by = .tree) + s(cluster_id, bs = "re") + 
-#>     .tree:noise - 1
+#> Pn ~ s(PAR, k = 5) + noise + s(cluster_id, bs = "re")
 #> 
 #> Parametric coefficients:
-#>               Estimate Std. Error t value Pr(>|t|)    
-#> .tree2        3.704269   0.064644  57.302   <2e-16 ***
-#> .tree4        4.706647   0.125626  37.465   <2e-16 ***
-#> .tree5        5.204786   0.120752  43.103   <2e-16 ***
-#> .tree2:noise  0.002032   0.056324   0.036    0.971    
-#> .tree4:noise  0.026986   0.115143   0.234    0.815    
-#> .tree5:noise -0.054230   0.114509  -0.474    0.636    
+#>             Estimate Std. Error t value Pr(>|t|)    
+#> (Intercept)  4.13331    0.06287  65.739   <2e-16 ***
+#> noise        0.03472    0.05285   0.657    0.511    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
 #>                 edf Ref.df      F p-value    
-#> s(PAR):.tree2 3.868  3.987 44.770  <2e-16 ***
-#> s(PAR):.tree4 3.129  3.560 25.050  <2e-16 ***
-#> s(PAR):.tree5 3.846  3.983 54.653  <2e-16 ***
-#> s(cluster_id) 4.017 20.000  0.253   0.202    
+#> s(PAR)        3.959  3.999 87.086  <2e-16 ***
+#> s(cluster_id) 4.042 20.000  0.251   0.216    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> R-sq.(adj) =  0.516   Deviance explained = 53.1%
-#> -REML = 1038.8  Scale est. = 1.4748    n = 628
+#> R-sq.(adj) =  0.358   Deviance explained = 36.8%
+#> GCV = 1.9854  Scale est. = 1.9538    n = 628
 ```
 
 We can also employ different functions than `s()` for the node-specific
@@ -577,21 +549,21 @@ summary(gt9)
 #> 
 #> Parametric coefficients:
 #>        Estimate Std. Error t value Pr(>|t|)    
-#> .tree2  3.54515    0.07759   45.69   <2e-16 ***
-#> .tree3  4.68830    0.07698   60.90   <2e-16 ***
+#> .tree2  3.54570    0.07779   45.58   <2e-16 ***
+#> .tree3  4.68573    0.07734   60.59   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
 #> Approximate significance of smooth terms:
-#>                        edf Ref.df      F p-value    
-#> te(PAR,noise):.tree2 7.766  8.443 13.033  <2e-16 ***
-#> te(PAR,noise):.tree3 9.945 11.200 35.268  <2e-16 ***
-#> s(cluster_id)        6.426 20.000  0.476  0.0813 .  
+#>                         edf Ref.df      F p-value    
+#> te(PAR,noise):.tree2  8.056  8.637 13.114  <2e-16 ***
+#> te(PAR,noise):.tree3 12.384 14.002 29.285  <2e-16 ***
+#> s(cluster_id)         6.724 20.000  0.504  0.0756 .  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> R-sq.(adj) =  0.517   Deviance explained = 53.6%
-#> -REML = 1033.1  Scale est. = 1.4722    n = 628
+#> R-sq.(adj) =  0.521   Deviance explained = 93.1%
+#> GCV = 1.5285  Scale est. = 1.4575    n = 628
 ```
 
 # To-do list
@@ -616,23 +588,23 @@ on global effects from the full GAM from the second-to-last iteration:
 
 ``` r
 coef(gt1)
-#>   (Intercept)  s(PAR).1   s(PAR).2  s(PAR).3  s(PAR).4  s(PAR).5  s(PAR).6
-#> 2    3.680405 -4.097417  -9.747088 -7.261808 -3.423061 -1.268304  8.574276
-#> 4    4.875050  2.118485  -9.365924 -7.057664 -1.791072 -2.357813  4.049454
-#> 5    5.196168 -5.583318 -14.790424 -9.290344 -3.934561 -7.341857 -4.233135
-#>     s(PAR).7  s(PAR).8 s(PAR).9
-#> 2 -0.1558398  7.445995 10.84713
-#> 4 -2.9141972  8.524812  7.73419
-#> 5 -3.0578102 12.046898 12.24184
+#>   (Intercept)   s(PAR).1  s(PAR).2  s(PAR).3  s(PAR).4  s(PAR).5   s(PAR).6
+#> 2    3.700746  -4.229937 -8.925765 -6.419708 -3.123013  4.133930 9.13784734
+#> 4    4.710368  -3.992768 -9.397897 -7.868900 -3.059983 -1.058191 5.48472474
+#> 5    5.285132 -10.109006 23.118991 14.836167 41.452806 55.693627 0.02877788
+#>     s(PAR).7   s(PAR).8 s(PAR).9
+#> 2   1.107162   6.000138 12.78004
+#> 4   2.962870   7.508345 11.30423
+#> 5 -11.010620 -49.776075 44.36823
 coef(gt1$tree)
-#>   (Intercept)  s(PAR).1   s(PAR).2  s(PAR).3  s(PAR).4  s(PAR).5  s(PAR).6
-#> 2    3.680405 -4.097417  -9.747088 -7.261808 -3.423061 -1.268304  8.574276
-#> 4    4.875050  2.118485  -9.365924 -7.057664 -1.791072 -2.357813  4.049454
-#> 5    5.196168 -5.583318 -14.790424 -9.290344 -3.934561 -7.341857 -4.233135
-#>     s(PAR).7  s(PAR).8 s(PAR).9
-#> 2 -0.1558398  7.445995 10.84713
-#> 4 -2.9141972  8.524812  7.73419
-#> 5 -3.0578102 12.046898 12.24184
+#>   (Intercept)   s(PAR).1   s(PAR).2   s(PAR).3   s(PAR).4  s(PAR).5  s(PAR).6
+#> 2    3.680405  -4.450707  -9.273774  -6.890283 -2.9187555 -3.301982  9.802856
+#> 4    4.875050   3.700263 -12.796646 -11.071199 -0.6819658 -2.496246  7.689810
+#> 5    5.196168 -10.773631  18.830462  10.236554 21.7896631  5.485991 29.524685
+#>       s(PAR).7   s(PAR).8 s(PAR).9
+#> 2 -0.007723617   6.302115 12.59880
+#> 4 -7.066515961  12.101445 15.78517
+#> 5 51.559591044 -44.310344 41.96981
 ```
 
 The ‘severity’ of the differences between the estimated coefficients is
@@ -665,21 +637,21 @@ preds <- data.frame(gam = predict(gt2$gamm),
                     tree = predict(gt2$tree, newdata = newdat, 
                                    type = "response"))
 cor(preds)
-#>           gam     tree
-#> gam  1.000000 0.996013
-#> tree 0.996013 1.000000
+#>            gam      tree
+#> gam  1.0000000 0.9981619
+#> tree 0.9981619 1.0000000
 colMeans(preds)
 #>      gam     tree 
-#> 4.130796 4.130796
+#> 4.130796 4.134305
 sapply(preds, var)
 #>      gam     tree 
-#> 1.676144 1.655734
+#> 1.748725 1.747762
 sapply(preds, max)
 #>      gam     tree 
-#> 7.035839 6.888124
+#> 7.501499 7.274412
 sapply(preds, min)
 #>      gam     tree 
-#> 1.277748 1.688563
+#> 1.135808 1.255259
 cols <- c(rep("white", times = 2), "yellow", "orange", "white", 
           "purple", "blue") 
 ```
@@ -697,9 +669,9 @@ Smoothing and scale parameters for the full GAM:
 ``` r
 gt2$gamm$sp
 #> s(PAR):.tree2 s(PAR):.tree4 s(PAR):.tree5 s(cluster_id) 
-#>   0.009019652   0.074274970   0.002309558  76.102109804
+#>  2.772777e-03  3.548033e-03  1.357165e-04  6.748856e+01
 gt2$gamm$scale
-#> [1] 1.338975
+#> [1] TRUE
 ```
 
 For the GAMs in the terminal nodes, we obtain different values for the
@@ -708,13 +680,13 @@ smoothing parameters:
 ``` r
 gt2$tree[[2]]$node$info$object$sp
 #>      s(PAR) 
-#> 0.009713257
+#> 0.003401764
 gt2$tree[[4]]$node$info$object$sp
-#>     s(PAR) 
-#> 0.01699203
-gt2$tree[[5]]$node$info$object$sp
 #>      s(PAR) 
-#> 0.009963582
+#> 0.001136981
+gt2$tree[[5]]$node$info$object$sp
+#>       s(PAR) 
+#> 0.0001236358
 ```
 
 This is probably due to a separate scale parameter being estimated in
@@ -722,9 +694,9 @@ each node, instead of a single global one in the full GAM:
 
 ``` r
 gt2$tree[[2]]$node$info$object$scale
-#> [1] 1.236955
+#> [1] TRUE
 gt2$tree[[4]]$node$info$object$scale
-#> [1] 0.9533168
+#> [1] TRUE
 gt2$tree[[5]]$node$info$object$scale
-#> [1] 2.275768
+#> [1] TRUE
 ```
