@@ -99,7 +99,7 @@ gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, cluster = eco$specimen)
 
 We can inspect the partition by plotting the tree (see `?plot.gamtree` for more info):
 
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=6, fig.height=5}
 plot(gt1, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 ```
 
@@ -107,14 +107,14 @@ Through the `treeplot_ctrl` argument, we can specify additional argument to be p
 
 The plots indicate similar trajectories in all three terminal nodes, revealing a sharp increase first, which then levels off. The increase appears to level off completely in node 2, while the increase in nodes 4 and 5 only slows down towards the right end. 
 
-Note that the red curves represent the fitted (predicted) values of the observations. They appear quite wiggly, because they reflect marginal effects, which are heavily influenced by where data was observed, and where it was not. To obtain a better view of the fitted splines, it is better to inspect the (probably more familiar) conditional effects of the fitted GAM(s). We can plot these as follows:
+Note that the red curves represent the fitted (predicted) values of the observations. They are not very smooth, because they reflect marginal effects, which can be strongly influenced by where data was observed, combined with the effects of other variables. We can also plot conditional effects (i.e., keeping all other predictors fixed) of the predictors:
 
-```{r, fig.width = 6, fig.height = 6}
+```{r, fig.width = 6, fig.height = 5}
 par(mfrow = c(2, 2))
 plot(gt1, which = "terms", which_terms = "local", gamplot_ctrl = list(shade = TRUE))
 ```
 
-We used the `gamplot_ctrl` argument to pass additional arguments to function `plot.gam()` (from package **mgcv**). We specified the `shade` argument, so that the confidence interval are depicted with a grey shaded area. Note however, that the plotted confidence intervals are overly opsimistic, because they do NOT account for the searching of the tree (subgroup) structure.
+We used the `gamplot_ctrl` argument to pass additional arguments to function `plot.gam()` (from package **mgcv**). We specified the `shade` argument, so that the confidence interval are depicted with a grey shaded area. Note however, that the plotted confidence intervals are overly optimistic, because they do not account for the searching of the tree (subgroup) structure.
 
 
 
@@ -159,12 +159,12 @@ Note that by default, the `coef` method returns the local (node-specific) estima
 
 We can plot the tree and the models fitted in each of the terminal nodes:
 
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=6, fig.height=5}
 plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .7)))
 par(mfrow = c(2, 2))
 plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE))
 ```
-Note that the local models are very similar to those in the earlier tree (`gt1`), because the global terms have minor/zero effects.
+
 
 
 

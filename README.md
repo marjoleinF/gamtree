@@ -125,11 +125,11 @@ appears to level off completely in node 2, while the increase in nodes 4
 and 5 only slows down towards the right end.
 
 Note that the red curves represent the fitted (predicted) values of the
-observations. They appear quite wiggly, because they reflect marginal
-effects, which are heavily influenced by where data was observed, and
-where it was not. To obtain a better view of the fitted splines, it is
-better to inspect the (probably more familiar) conditional effects of
-the fitted GAM(s). We can plot these as follows:
+observations. They are not very smooth, because they reflect marginal
+effects, which can be strongly influenced by where data was observed,
+combined with the effects of other variables. We can also plot
+conditional effects (i.e., keeping all other predictors fixed) of the
+predictors:
 
 ``` r
 par(mfrow = c(2, 2))
@@ -142,7 +142,7 @@ We used the `gamplot_ctrl` argument to pass additional arguments to
 function `plot.gam()` (from package **mgcv**). We specified the `shade`
 argument, so that the confidence interval are depicted with a grey
 shaded area. Note however, that the plotted confidence intervals are
-overly opsimistic, because they do NOT account for the searching of the
+overly optimistic, because they do not account for the searching of the
 tree (subgroup) structure.
 
 ## GAM-based recursive partition with global effects
@@ -271,9 +271,7 @@ par(mfrow = c(2, 2))
 plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE))
 ```
 
-![](inst/README-figures/README-unnamed-chunk-14-2.png) Note that the
-local models are very similar to those in the earlier tree (`gt1`),
-because the global terms have minor/zero effects.
+![](inst/README-figures/README-unnamed-chunk-14-2.png)
 
 ## Evaluating the adequacy of the basis used to represent the smooth terms
 
@@ -300,7 +298,7 @@ gam.check(gt2$gamm)
 #>                  k'   edf k-index p-value   
 #> s(PAR):.tree2  9.00  8.14    0.92   0.005 **
 #> s(PAR):.tree4  9.00  6.53    0.92   0.025 * 
-#> s(PAR):.tree5  9.00  8.52    0.92   0.025 * 
+#> s(PAR):.tree5  9.00  8.52    0.92   0.015 * 
 #> s(cluster_id) 21.00  5.86      NA      NA   
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -345,8 +343,8 @@ gam.check(gt3$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value  
-#> s(PAR):.tree2 17.00  9.42    0.93    0.05 *
-#> s(PAR):.tree3 17.00  8.11    0.93    0.06 .
+#> s(PAR):.tree2 17.00  9.42    0.93   0.045 *
+#> s(PAR):.tree3 17.00  8.11    0.93   0.040 *
 #> s(cluster_id) 21.00  7.51      NA      NA  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
