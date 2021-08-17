@@ -134,7 +134,7 @@ predictors:
 ``` r
 par(mfrow = c(2, 2))
 plot(gt1, which = "terms", which_terms = "local", 
-     gamplot_ctrl = list(shade = TRUE, cex.main = .6, cex.axis = .6, cex.lab = .6))
+     gamplot_ctrl = list(shade = TRUE, cex.main = .8, cex.axis = .6, cex.lab = .6))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-10-1.png)
@@ -269,7 +269,7 @@ plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 
 ``` r
 par(mfrow = c(2, 2))
-plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .6, 
+plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .8, 
                                                cex.axis = .6, cex.lab = .6))
 ```
 
@@ -297,11 +297,11 @@ gam.check(gt2$gamm)
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                  k'   edf k-index p-value  
-#> s(PAR):.tree2  9.00  8.14    0.92   0.020 *
-#> s(PAR):.tree4  9.00  6.53    0.92   0.040 *
-#> s(PAR):.tree5  9.00  8.52    0.92   0.035 *
-#> s(cluster_id) 21.00  5.86      NA      NA  
+#>                  k'   edf k-index p-value   
+#> s(PAR):.tree2  9.00  8.14    0.92   0.030 * 
+#> s(PAR):.tree4  9.00  6.53    0.92   0.025 * 
+#> s(PAR):.tree5  9.00  8.52    0.92   0.005 **
+#> s(cluster_id) 21.00  5.86      NA      NA   
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -345,7 +345,7 @@ gam.check(gt3$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value  
-#> s(PAR):.tree2 17.00  9.42    0.93   0.020 *
+#> s(PAR):.tree2 17.00  9.42    0.93   0.040 *
 #> s(PAR):.tree3 17.00  8.11    0.93   0.045 *
 #> s(cluster_id) 21.00  7.51      NA      NA  
 #> ---
@@ -369,7 +369,7 @@ plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 
 ``` r
 par(mfrow = c(2, 2))
-plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .6, 
+plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .8, 
                                                cex.axis = .6, cex.lab = .6))
 ```
 
