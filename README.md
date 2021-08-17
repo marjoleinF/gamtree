@@ -109,7 +109,7 @@ We can inspect the partition by plotting the tree (see `?plot.gamtree`
 for more info):
 
 ``` r
-plot(gt1, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt1, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-9-1.png)
@@ -262,7 +262,7 @@ We can plot the tree and the models fitted in each of the terminal
 nodes:
 
 ``` r
-plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-14-1.png)
@@ -298,9 +298,9 @@ gam.check(gt2$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value  
-#> s(PAR):.tree2  9.00  8.14    0.92   0.025 *
-#> s(PAR):.tree4  9.00  6.53    0.92   0.035 *
-#> s(PAR):.tree5  9.00  8.52    0.92   0.020 *
+#> s(PAR):.tree2  9.00  8.14    0.92   0.020 *
+#> s(PAR):.tree4  9.00  6.53    0.92   0.040 *
+#> s(PAR):.tree5  9.00  8.52    0.92   0.035 *
 #> s(cluster_id) 21.00  5.86      NA      NA  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -318,7 +318,7 @@ of `k`, to see if that increases the reported `edf` substantially:
 ``` r
 gt3 <- gamtree(Pn ~ s(PAR, k=18L) | noise + s(cluster_id, bs = "re") | Species, 
                data = eco, cluster = eco$specimen)
-plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-16-1.png)
@@ -345,7 +345,7 @@ gam.check(gt3$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value  
-#> s(PAR):.tree2 17.00  9.42    0.93   0.045 *
+#> s(PAR):.tree2 17.00  9.42    0.93   0.020 *
 #> s(PAR):.tree3 17.00  8.11    0.93   0.045 *
 #> s(cluster_id) 21.00  7.51      NA      NA  
 #> ---
@@ -362,7 +362,7 @@ lines, and perhaps a different tree:
 ``` r
 gt4 <- gamtree(Pn ~ s(PAR, k=5L) | noise + s(cluster_id, bs="re") | Species,
                data = eco, cluster = eco$specimen, verbose = FALSE)
-plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-18-1.png)
@@ -474,7 +474,7 @@ here, to generate a `list` of control arguments for function `mob()`.
 We inspect the result:
 
 ``` r
-plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-24-1.png)

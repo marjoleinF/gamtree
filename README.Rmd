@@ -100,7 +100,7 @@ gt1 <- gamtree(Pn ~ s(PAR) | Species, data = eco, cluster = eco$specimen)
 We can inspect the partition by plotting the tree (see `?plot.gamtree` for more info):
 
 ```{r, fig.width=5, fig.height=4}
-plot(gt1, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt1, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 Through the `treeplot_ctrl` argument, we can specify additional argument to be passed to function `plot.party()` (from package **partykit**). We passed the `gp` argument, to have a smaller font size for the node and path labels than with the default `cex = 1`.
@@ -161,7 +161,7 @@ Note that by default, the `coef` method returns the local (node-specific) estima
 We can plot the tree and the models fitted in each of the terminal nodes:
 
 ```{r, fig.width=5, fig.height=4}
-plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 par(mfrow = c(2, 2))
 plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .6, 
                                                cex.axis = .6, cex.lab = .6))
@@ -186,7 +186,7 @@ Based on the `gam.check()` function results, we could increase the value of `k`,
 ```{r, fig.width=5, fig.height=4}
 gt3 <- gamtree(Pn ~ s(PAR, k=18L) | noise + s(cluster_id, bs = "re") | Species, 
                data = eco, cluster = eco$specimen)
-plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 We obtained a tree with a single split. Increased flexibility of the smooth curves seems to have accounted for the difference between Eugene and Sapium we saw in the earlier tree. Otherwise, the results seem the same as before: The response variable values appear somewhat lower at the start in node 2, compared to node 3. This difference seems to have increased at the last measurements.
@@ -201,14 +201,14 @@ The `edf` values have not increased substantially and the `k-index` values are s
 
 We can also reduce the value of `k` to see if that yields less wiggly lines, and perhaps a different tree:
 
-```{r, fig.width = 4, fig.height=5}
+```{r, fig.width = 4, fig.height=3}
 gt4 <- gamtree(Pn ~ s(PAR, k=5L) | noise + s(cluster_id, bs="re") | Species,
                data = eco, cluster = eco$specimen, verbose = FALSE)
-plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 
-```{r, fig.width = 4, fig.height=5}
+```{r, fig.width = 5, fig.height=4}
 par(mfrow = c(2, 2))
 plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .6, 
                                                cex.axis = .6, cex.lab = .6))
@@ -260,7 +260,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 We inspect the result:
 
 ```{r, fig.width = 5, fig.height=4}
-plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .6)))
+plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 We can again check whether the sums of the observation-wise gradient contributions are reasonably close to zero:
