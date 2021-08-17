@@ -112,7 +112,7 @@ Note that the red curves represent the fitted (predicted) values of the observat
 ```{r, fig.width = 5, fig.height = 4}
 par(mfrow = c(2, 2))
 plot(gt1, which = "terms", which_terms = "local", 
-     gamplot_ctrl = list(shade = TRUE, cex.main = .6, cex.axis = .6, cex.lab = .6))
+     gamplot_ctrl = list(shade = TRUE, cex.main = .8, cex.axis = .6, cex.lab = .6))
 ```
 
 We used the `gamplot_ctrl` argument to pass additional arguments to function `plot.gam()` (from package **mgcv**). We specified the `shade` argument, so that the confidence interval are depicted with a grey shaded area. Note however, that the plotted confidence intervals are overly optimistic, because they do not account for the searching of the tree (subgroup) structure.
@@ -163,7 +163,7 @@ We can plot the tree and the models fitted in each of the terminal nodes:
 ```{r, fig.width=5, fig.height=4}
 plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 par(mfrow = c(2, 2))
-plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .6, 
+plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .8, 
                                                cex.axis = .6, cex.lab = .6))
 ```
 
@@ -183,7 +183,7 @@ By default, `gam.check()` also yields residual plots, which are omitted here. Th
 
 Based on the `gam.check()` function results, we could increase the value of `k`, to see if that increases the reported `edf` substantially:
 
-```{r, fig.width=5, fig.height=4}
+```{r, fig.width=4, fig.height=3}
 gt3 <- gamtree(Pn ~ s(PAR, k=18L) | noise + s(cluster_id, bs = "re") | Species, 
                data = eco, cluster = eco$specimen)
 plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
@@ -210,7 +210,7 @@ plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 
 ```{r, fig.width = 5, fig.height=4}
 par(mfrow = c(2, 2))
-plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .6, 
+plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .8, 
                                                cex.axis = .6, cex.lab = .6))
 ```
 
@@ -259,7 +259,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 
 We inspect the result:
 
-```{r, fig.width = 5, fig.height=4}
+```{r, fig.width = 4, fig.height=3}
 plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
