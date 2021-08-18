@@ -297,11 +297,11 @@ gam.check(gt2$gamm)
 #> Basis dimension (k) checking results. Low p-value (k-index<1) may
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
-#>                  k'   edf k-index p-value   
-#> s(PAR):.tree2  9.00  8.14    0.92   0.030 * 
-#> s(PAR):.tree4  9.00  6.53    0.92   0.025 * 
-#> s(PAR):.tree5  9.00  8.52    0.92   0.005 **
-#> s(cluster_id) 21.00  5.86      NA      NA   
+#>                  k'   edf k-index p-value  
+#> s(PAR):.tree2  9.00  8.14    0.92   0.015 *
+#> s(PAR):.tree4  9.00  6.53    0.92   0.030 *
+#> s(PAR):.tree5  9.00  8.52    0.92   0.020 *
+#> s(cluster_id) 21.00  5.86      NA      NA  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -345,8 +345,8 @@ gam.check(gt3$gamm)
 #> indicate that k is too low, especially if edf is close to k'.
 #> 
 #>                  k'   edf k-index p-value  
-#> s(PAR):.tree2 17.00  9.42    0.93   0.040 *
-#> s(PAR):.tree3 17.00  8.11    0.93   0.045 *
+#> s(PAR):.tree2 17.00  9.42    0.93   0.035 *
+#> s(PAR):.tree3 17.00  8.11    0.93   0.030 *
 #> s(cluster_id) 21.00  7.51      NA      NA  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
@@ -356,7 +356,7 @@ The `edf` values have not increased substantially and the `k-index`
 values are similar to the earlier values. Thus, increasing the number of
 knots to a larger number than the default seems not necessary.
 
-We can also reduce the value of `k` to see if that yields less wiggly
+We can also *reduce* the value of `k` to see if that yields less wiggly
 lines, and perhaps a different tree:
 
 ``` r
@@ -376,9 +376,9 @@ plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .8,
 ![](inst/README-figures/README-unnamed-chunk-19-1.png)
 
 To the eye, a lower value dimension for the bases to represent the
-smooth terms seems more appriate, as it yields less wiggly lines. The
-lower value for `k` does not seem to yield a different tree or
-conclusions anyway. For now, we will stick with the value of `k = 5`.
+smooth terms seems more appropriate; the lower flexibility leads less
+wiggly lines. The lower value for `k` does not seem to yield a different
+tree or conclusions anyway. So we will stick with the value of `k = 5`.
 
 ## Further inspection of the fitted model
 
