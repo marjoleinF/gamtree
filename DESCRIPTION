@@ -1,6 +1,6 @@
 Package: gamtree
 Title: GAM-based Recursive Partitioning
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: person("Marjolein", "Fokkema", email = "m.fokkema@fsw.leidenuniv.nl", role = c("aut", "cre"))
 Description: Recursively partitions the observations in a dataset, based on the parameters of a locally
 	specified generalized additive model (GAM), while possibly also estimating globally specified GAM 

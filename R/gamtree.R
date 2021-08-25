@@ -100,7 +100,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
                     alt_formula = NULL, ...) {
 
   ## TODO: Argument checking
-  
+  if (!inherits(data, "data.frame")) warning("Argument data should specify a data.frame")
   
   ## specify use of gam() versus bam()
   if (bam) {
@@ -110,6 +110,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
     mob_gamfit <- gamfit # TODO: Replace bam_fit function
     gam_fit <- mgcv::gam
   }
+  
   ## Construct formulas
   ##
   ## For tree (tf), local gam (lgf) and global gam (ggf):
@@ -135,11 +136,11 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
       ggf <- formula(ff, lhs = NULL, rhs = 0)
     }
   }
-  if (length(local_vars) == 0) local_vars <- 1
+  if (length(local_vars) == 0) local_vars <- 1L
   response <- ff[[2]] 
   if (length(response) > 1L && is.call(response[1])) {
     response <- as.character(response)
-    response <- paste0(response[1], "(", response[2], ", ", response[3], ")")
+    response <- paste0(response[1L], "(", response[2L], ", ", response[3L], ")")
   }
   tf <- formula(paste(response, "~", 
                 paste(local_vars, collapse = " + "), "|", 
@@ -202,6 +203,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
     mob_ctrl <- mob_control(verbose = verbose, xtype = "data.frame",
                             ytype = "data.frame")
   } else {
+    mob_ctrl <- do.call("mob_control", args = mob_ctrl)
     mob_ctrl$verbose <- verbose
     mob_ctrl$ytype <- mob_ctrl$xtype <- "data.frame"
   }
@@ -214,7 +216,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
   ## TODO: Allow for starting with estimation of global model
   if (global_gam && globalstart) {
     gamm <- gam_fit(fgf_alt, data = data, weights = .weights, 
-                    offset = data$.offset, gam_ctrl = gam_ctrl, ...)
+                    offset = .offset, gam_ctrl = gam_ctrl, ...)
     data$.global <- predict(gamm, newdata = data) + data$.offset
   } else {
     data$.global <- data$.offset    
@@ -272,36 +274,37 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
                           gam_ctrl = gam_ctrl, ...)
         } 
       }
-    
-      ## Obtain predictions of global parts of full model
-      if (iteration == 1L) {
-        keep_terms <- colnames(predict(gamm, newdata = data[1,], type = "terms"))
-        keep_terms <- keep_terms[!grepl(".tree", keep_terms)]
-      }
-      if (length(tree) == 1L) {
-        ## keep only global terms:
-        keep_terms1 <- keep_terms
-        for (i in local_vars) {
-          keep_terms1 <- keep_terms[-grep(i, keep_terms)]
-        }
-        data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
-                                        terms = keep_terms1)) + data$.offset
-      } else {
-        data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
-                                        terms = keep_terms)) + data$.offset
-      }
+      if (global_gam) {
       
+        ## Obtain predictions of global parts of full model
+        if (iteration == 1L) {
+          keep_terms <- colnames(predict(gamm, newdata = data[1,], type = "terms"))
+          keep_terms <- keep_terms[!grepl(".tree", keep_terms)]
+        }
+        if (length(tree) == 1L) {
+          ## keep only global terms:
+          keep_terms1 <- keep_terms
+          for (i in local_vars) {
+            keep_terms1 <- keep_terms[-grep(i, keep_terms)]
+          }
+          data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
+                                          terms = keep_terms1)) + data$.offset
+        } else {
+          data$.global <- rowSums(predict(gamm, newdata = data, type = "terms",
+                                          terms = keep_terms)) + data$.offset
+        }
+      }
       ## iteration information
       newloglik <- logLik(gamm)    
-      continue <- (abs(newloglik - oldloglik[1]) > abstol) &
-        (iteration < maxit)
+      continue <- (abs(newloglik - oldloglik[1]) > abstol) & (iteration < maxit)
       if (continue & (abs(newloglik - oldloglik[2]) < abstol)) {
         if (newloglik > oldloglik[1]) continue <- FALSE
       }
       oldloglik[2] <- oldloglik[1]
       oldloglik[1] <- newloglik
       if (verbose) print(newloglik)
-    } else continue <- FALSE 
+      if (!global_gam) continue <- FALSE
+    } else continue <- FALSE ## no global GAM, no joint estimation
   }
   
   ## collect results
@@ -462,6 +465,8 @@ summary.gamtree <- function(object, ...) {
 #' @param which_terms character; \code{"local"}, \code{"global"} or \code{"both"}.
 #' Only used when argument \code{which} equal \code{"global"} or \code{"both"}.
 #' Specifies whether the local and/or global (smooth) terms should be plotted.
+#' @param residuals Only used when \code{which_terms = local}. Should residuals
+#' be plotted in the node-specific plots?
 #' @param dim numeric vector of length two. Specifies how many rows and columns 
 #' of plots should be fit on a single page.
 #' \code{NULL} (the default) has the routine leave all settings as they are.
@@ -501,8 +506,8 @@ summary.gamtree <- function(object, ...) {
 #' 
 #' @importFrom graphics plot par
 #' @export
-plot.gamtree <- function(x, which = "both", which_terms = "both", dim = NULL,
-                         ylim = "firstnode", treeplot_ctrl = list(), 
+plot.gamtree <- function(x, which = "both", which_terms = "both", residuals = TRUE,
+                         dim = NULL, ylim = "firstnode", treeplot_ctrl = list(), 
                          gamplot_ctrl = list(), ...) {
 
   ## Argument checking
@@ -541,7 +546,8 @@ plot.gamtree <- function(x, which = "both", which_terms = "both", dim = NULL,
       if (which_terms != "global") {
         ## Plot local smooths (and parametric terms)
         ## TODO: Allow for having an intercept-only model in the terminal nodes
-        terminal_nodes <- unique(x$data$.tree)
+        terminal_nodes <- levels(x$data$.tree)
+        x_name <- as.character(x$tree[[1]]$node$info$object$pred.formula)[2]
         for (i in 1:length(local_GAM_term_ids)) {
           gamplot_ctrl[["select"]] <-  local_GAM_term_ids[i]
           gamplot_ctrl[["main"]] <- paste("node", terminal_nodes[i])
@@ -554,6 +560,9 @@ plot.gamtree <- function(x, which = "both", which_terms = "both", dim = NULL,
           } else {
             do.call(plot, gamplot_ctrl)        
           }
+          ## add node-specific residuals to plot
+          obs_ids <- predict(x$tree) == terminal_nodes[i]
+          if (residuals) points(x = x$data[obs_ids, x_name], y = residuals(x$gamm)[obs_ids], pch = ".")
         }
       }
       
@@ -561,7 +570,7 @@ plot.gamtree <- function(x, which = "both", which_terms = "both", dim = NULL,
         ## Plot global smooths (and parametric terms)
         for (i in 1:length(global_GAM_term_ids)) {
           gamplot_ctrl[["select"]] <-  global_GAM_term_ids[i]
-          gamplot_ctrl[["main"]] <- paste("global term:", smooth_term_labels[global_GAM_term_ids[i]])
+          gamplot_ctrl[["main"]] <- paste("global term", smooth_term_labels[global_GAM_term_ids[i]])
           do.call(plot, gamplot_ctrl)        
         }
       }
@@ -583,6 +592,7 @@ plot.gamtree <- function(x, which = "both", which_terms = "both", dim = NULL,
         for (i in terminal_nodes) {
           gamplot_ctrl[["x"]] <- x$tree[[i]]$node$info$object
           gamplot_ctrl[["main"]] <- paste("node", i)
+          if (residuals) gamplot_ctrl[["residuals"]] <- TRUE  
           do.call(plot, gamplot_ctrl)   
         }
       }
@@ -629,7 +639,8 @@ coef.gamtree <- function(object, which = "local", ...) {
         tmp <- coefs_gam[grep(paste0(".tree", i), names(coefs_gam))]
         intercept_id <- which(colnames(coefs) == "(Intercept)")
         coefs[i, intercept_id] <- tmp[paste0(".tree", i)]
-        coefs[i, -intercept_id] <- tmp[grep(paste0(":.tree"), names(tmp))]
+        coefs[i, -intercept_id] <- tmp[grepl(paste0(":.tree"), names(tmp)) | 
+                                         grepl(paste0(".tree", i, ":"), names(tmp)) ]
       }
     } else {
       ## Get coefs from tree
@@ -656,9 +667,9 @@ coef.gamtree <- function(object, which = "local", ...) {
 
 #' Predictions from fitted GAM tree
 #'  
-#' Takes a fitted GAM tree (produced by \code{gamtree()}) and produces 
+#' @description Takes a fitted GAM tree (of class \code{"gamtree"}) and produces 
 #' predictions given a new set of values for the model covariates,
-#' of for the original covariate values used for fitting the GAM tree.
+#' or for the original covariate values used for fitting the GAM tree.
 #' 
 #' @param object an object of class \code{gamtree}.
 #' @param newdata a \code{data.frame} containing the values of the model
@@ -669,7 +680,7 @@ coef.gamtree <- function(object, which = "local", ...) {
 #' of the linear predictor. Alternatively, \code{"response"} returns predictions
 #' on the scale of the response variable; \code{"node"} returns an integer vector
 #' of node identifiers.
-#' @param ... further arguments to be passed to \code{predict.gam}.
+#' @param ... further arguments to be passed to \code{\link{mgcv}predict.gam}.
 #' 
 #' @return Returns a vector of predicted values.
 #'  
@@ -735,24 +746,43 @@ predict.gamtree <- function(object, newdata = NULL, type = "link", ...) {
 
 #' Sum of the observation-wise gradient contributions to the fitted model.
 #' 
-#' Computes the sum of the observation-wise gradient contributions to the
-#' fitted model in each of the terminal nodes. The sums should be reasonably
-#' close to zero.
+#' Computes the sum of the column-wise sums of the observation-wise gradient 
+#' contributions to the fitted GAM in each of the tree nodes. This yields a 
+#' sum for each coefficients in each node. This sum should be reasonably
+#' close to zero. The more the column-wise sum of the observation-wise
+#' gradient contribution differts from zero, the more the parameter 
+#' stability tests w.r.t. to that coefficient will be overpowered.
 #' 
 #' @param object an object of class \code{gamtree}.
+#' @param return_fits whether fitted GAMs should be returned.
 #' 
 #' @return Returns a matrix with the sum of the observation-wise gradient
-#' contributions, with a row for each terminal node of the tree and a column
-#' for each coefficient.
+#' contributions, with a row for each node of the tree and a column
+#' for each coefficient. If \code{return_fits = TRUE}, a list with two
+#' components is returned: The first component \code{$grad} contains the
+#' a matrix with the column-wise sums of the gradient contributions. The
+#' second component \code{$fits} contains a list of the node-specific GAM 
+#' fits.
 #' 
 #' @importFrom sandwich estfun
 #' @export
-check_grad <- function(object) {
+check_grad <- function(object, return_fits = FALSE) {
   gamfits <- refit.modelparty(object$tree)
-  gradients <- colSums(estfun(gamfits[[1]]))
-  gradients <- as.data.frame(t(gradients))
-  for (i in 1L:length(object$tree)) {
-    gradients[i, ] <- colSums(estfun(gamfits[[i]]))
+  if (inherits(gamfits, "list")) {
+    ## Then at least one split was implemented and gamfits is a list of GAM fits
+    gradients <- colSums(estfun(gamfits[[1]]))
+    gradients <- as.data.frame(t(gradients))
+    for (i in 2L:length(object$tree)) {
+      gradients[i, ] <- colSums(estfun(gamfits[[i]]))
+    }
+  } else {
+    ## Then no splits were implemented and gamfits is a single GAM fit
+    gradients <- colSums(estfun(gamfits))
+    gradients <- as.data.frame(t(gradients))
   }
-  return(gradients)
+  if (return_fits) {
+    list(grad = gradients, fits = gamfits)
+  } else {
+    return(gradients)
+  }
 }

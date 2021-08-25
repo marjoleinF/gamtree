@@ -4,18 +4,27 @@
 \alias{check_grad}
 \title{Sum of the observation-wise gradient contributions to the fitted model.}
 \usage{
-check_grad(object)
+check_grad(object, return_fits = FALSE)
 }
 \arguments{
 \item{object}{an object of class \code{gamtree}.}
+
+\item{return_fits}{whether fitted GAMs should be returned.}
 }
 \value{
 Returns a matrix with the sum of the observation-wise gradient
-contributions, with a row for each terminal node of the tree and a column
-for each coefficient.
+contributions, with a row for each node of the tree and a column
+for each coefficient. If \code{return_fits = TRUE}, a list with two
+components is returned: The first component \code{$grad} contains the
+a matrix with the column-wise sums of the gradient contributions. The
+second component \code{$fits} contains a list of the node-specific GAM 
+fits.
 }
 \description{
-Computes the sum of the observation-wise gradient contributions to the
-fitted model in each of the terminal nodes. The sums should be reasonably
-close to zero.
+Computes the sum of the column-wise sums of the observation-wise gradient 
+contributions to the fitted GAM in each of the tree nodes. This yields a 
+sum for each coefficients in each node. This sum should be reasonably
+close to zero. The more the column-wise sum of the observation-wise
+gradient contribution differts from zero, the more the parameter 
+stability tests w.r.t. to that coefficient will be overpowered.
 }

@@ -8,6 +8,7 @@
   x,
   which = "both",
   which_terms = "both",
+  residuals = TRUE,
   dim = NULL,
   ylim = "firstnode",
   treeplot_ctrl = list(),
@@ -31,6 +32,9 @@ referred to as 'marginal' fitted curves.}
 \item{which_terms}{character; \code{"local"}, \code{"global"} or \code{"both"}.
 Only used when argument \code{which} equal \code{"global"} or \code{"both"}.
 Specifies whether the local and/or global (smooth) terms should be plotted.}
+
+\item{residuals}{Only used when \code{which_terms = local}. Should residuals
+be plotted in the node-specific plots?}
 
 \item{dim}{numeric vector of length two. Specifies how many rows and columns 
 of plots should be fit on a single page.

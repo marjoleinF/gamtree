@@ -2,11 +2,7 @@
 % Please edit documentation in R/gamtree.R
 \name{predict.gamtree}
 \alias{predict.gamtree}
-\title{Predictions from fitted GAM tree
- 
-Takes a fitted GAM tree (produced by \code{gamtree()}) and produces 
-predictions given a new set of values for the model covariates,
-of for the original covariate values used for fitting the GAM tree.}
+\title{Predictions from fitted GAM tree}
 \usage{
 \method{predict}{gamtree}(object, newdata = NULL, type = "link", ...)
 }
@@ -23,15 +19,13 @@ of the linear predictor. Alternatively, \code{"response"} returns predictions
 on the scale of the response variable; \code{"node"} returns an integer vector
 of node identifiers.}
 
-\item{...}{further arguments to be passed to \code{predict.gam}.}
+\item{...}{further arguments to be passed to \code{\link{mgcv}predict.gam}.}
 }
 \value{
 Returns a vector of predicted values.
 }
 \description{
-Predictions from fitted GAM tree
- 
-Takes a fitted GAM tree (produced by \code{gamtree()}) and produces 
+Takes a fitted GAM tree (of class \code{"gamtree"}) and produces 
 predictions given a new set of values for the model covariates,
-of for the original covariate values used for fitting the GAM tree.
+or for the original covariate values used for fitting the GAM tree.
 }

@@ -1,0 +1,20 @@
+Changes in Version 0.0.2 (August 2021):
+
+  - Many bug fixes, including: 
+
+  -  Offsets now correctly passed between tree and GAM, which earlier 
+       version did not, yielding no changes of improvement when joint 
+       estimation was performed.
+
+  - Improved argument passing to functions gam() and bam(). 
+
+  - Function gamtree now supports fitting with gam() and well as bam().
+
+  - Improved plot, coef and predict methods.
+
+
+
+
+Changes in Version 0.0.1 (June 2019):
+
+  - First development version, available from github.
