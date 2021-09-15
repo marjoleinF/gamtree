@@ -9,9 +9,9 @@ the user.
 
 For fitting the smooth and parametric terms, package **mgcv** is
 employed. For recursive partitioning, package **partykit** is employed.
-The **gamtree** package is under development; much work and testing
-still needs to be done. The current version of the package can be
-installed as follows:
+The **gamtree** package is experimental. 
+
+The current version of the package can be installed as follows:
 
 ``` r
 library("devtools")
