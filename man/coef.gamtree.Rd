@@ -19,12 +19,12 @@ estimated coefficients should be returned.}
 Returns a matrix (if \code{which = "local"}) or a vector (if 
 \code{which = "global"}) with estimated coefficients. 
 ## GAM tree without global terms:
-gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
+gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$Specimen)
 coef(gt1)
 
 ## GAM tree with global terms:
 gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
-              data = eco, cluster = eco$specimen)
+              data = eco, cluster = eco$Specimen)
 coef(gt2)
 coef(gt2, which = "global")
 }

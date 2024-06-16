@@ -4,10 +4,13 @@
 \alias{check_grad}
 \title{Sum of the observation-wise gradient contributions to the fitted model.}
 \usage{
-check_grad(object, return_fits = FALSE)
+check_grad(object, var = FALSE, return_fits = FALSE)
 }
 \arguments{
 \item{object}{an object of class \code{gamtree}.}
+
+\item{var}{logical. Should the variance of the observation-wise gradient
+contributions be returned?}
 
 \item{return_fits}{whether fitted GAMs should be returned.}
 }
@@ -25,6 +28,7 @@ Computes the sum of the column-wise sums of the observation-wise gradient
 contributions to the fitted GAM in each of the tree nodes. This yields a 
 sum for each coefficients in each node. This sum should be reasonably
 close to zero. The more the column-wise sum of the observation-wise
-gradient contribution differts from zero, the more the parameter 
+gradient contribution differ
+s from zero, the more the parameter 
 stability tests w.r.t. to that coefficient will be overpowered.
 }

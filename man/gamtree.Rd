@@ -2,21 +2,15 @@
 % Please edit documentation in R/gamtree.R
 \name{gamtree}
 \alias{gamtree}
-\title{Recursively partition a dataset based on a (local) GAM, while accounting for 
-global GAM terms.}
+\title{Recursively partition a dataset based on penalized GAMs.}
 \usage{
 gamtree(
   formula,
   data,
   weights = NULL,
   cluster = NULL,
-  joint = TRUE,
-  globalstart = FALSE,
   offset = NULL,
-  abstol = 0.001,
   verbose = FALSE,
-  maxit = 100,
-  bam = FALSE,
   gam_ctrl = list(),
   mob_ctrl = mob_control(),
   alt_formula = NULL,
@@ -24,12 +18,13 @@ gamtree(
 )
 }
 \arguments{
-\item{formula}{specifies the model formula, consisting of three or four 
+\item{formula}{specifies the model formula, consisting of three 
 parts: the response variable followed by a tilde ('~'); the terms for the 
-node-specific (local) GAMs, followed by a vertical bar ('|'); the global GAM terms followed 
-by a vertical bar (this global part is optional!), and then the potential 
-partitioning variables (separated by a '+'). The 'by' argument of function
-\code{\link[mgcv]{s}} may NOT be used in the node-specific GAM formulation. Refrain from
+node-specific GAMs, followed by a vertical bar ('|') and the potential 
+partitioning variables (separated by a '+'). 
+The 'by' argument of function
+\code{\link[mgcv]{s}} may NOT be used in the node-specific GAM formulation. 
+Refrain from
 using the dot ('.') to specify all remaining variables in \code{data}, this may yield
 unexpected results; make sure to specify each variable in the corresponding part
 of the model formula. See Examples.}
@@ -44,45 +39,16 @@ observation twice.}
 employed for clustered covariances in the parameter stability tests.
 This argument should be used when the partitioning variables are not measured
 on the individual observation level, but on a higher level. E.g., when 
-the response variables consists of repeated measurements on multiple 
-observations and the partitioning variables are time-invariant covariates.}
-
-\item{joint}{Should local models be re-estimated jointly along with the
-global model? Jointly re-estimating may yield a more accurate final model,
-and may need less iterations to converge. A possible advantage of joint 
-re-estimation of the local, node-specific models is that the same smoothing and 
-scale parameters will be employed within each smooth term. If the local spline 
-models are estimated separately within each node, they will obtain a different
-scale and smoothing parameter in each node. It however depends on the data
-problem at hand if smoothing and scale parameters should be estimated 
-locally (i.e., separately for each node), or globally.}
-
-\item{globalstart}{Should estimation initialize with the global model? Defaults 
-\code{FALSE}, resulting in the tree (partition or subgroup structure) being 
-estimated, first. If set to \code{TRUE}, (ignored if no global part has been
-specified in the \code{formula}), the global part of the model will be estimated
-first.}
+the response variables consists of repeated measurements on multiple}
 
 \item{offset}{numeric vector of length \code{nrow(data)}. Supplies model 
 offset for use in fitting. Note that this offset will always be completely 
 ignored when predicting.}
 
-\item{abstol}{numeric. Specifies the convergence criterion. If the log-likelihood 
-values of the full GAM (with both local and global components), differ less than 
-abstol between two consecutive iterations, estimation is halted.}
-
 \item{verbose}{logical. Should progress be printed to the commande line in 
 every iteration? If true, the iteration number, information on the 
 splitting procedure, and the log-likelihood (with df) value of the fitted 
 full mixed-effects gam model is printed.}
-
-\item{maxit}{numeric. The maximum number of iterations to be performed in 
-estimation of the model tree.}
-
-\item{bam}{logical. Should function \code{\link[mgcv]{bam}} be used to fit
-the GAMs? Defaults to \code{FALSE}, resulting in function \code{\link[mgcv]{gam}} 
-being used for fitting the GAMs. \code{TRUE} will result in function 
-\code{\link[mgcv]{bam}} being used for fitting the GAMs.}
 
 \item{gam_ctrl}{a list of fit control parameters to replace defaults returned by 
 \code{\link[mgcv]{gam.control}}. Values not set assume default values.}
@@ -92,12 +58,12 @@ being used for fitting the GAMs. \code{TRUE} will result in function
 \code{\link[partykit]{mob}}. Note: argument `xtype` is set to 
 `data.frame`, by default, and cannot be adjusted.}
 
-\item{alt_formula}{list with two elements, for specifying non=standard model formulea
+\item{alt_formula}{list with two elements, for specifying non-standard model formulae
 for GAM. E.g., the formula list required for use of the \code{\link[mgcv]{multinom}}
 family.}
 
-\item{...}{additional arguments to be passed to function \code{\link[mgcv]{gam}} 
-(or \code{\link[mgcv]{bam}}). The same arguments will be employed for the local
+\item{...}{additional arguments to be passed to function \code{\link[mgcv]{gam}}. 
+The same arguments will be employed for the local
 (node-specific) GAMs, and the global GAM (if specified in the model \code{formula}).}
 }
 \value{
@@ -111,19 +77,12 @@ observations; \code{\link{plot.gamtree}} for plotting the tree and variables' ef
 \code{\link{summary.gamtree}} for a summary of the fitted model.
 }
 \description{
-\code{gamtree} recursively partition a dataset based on a (local) GAM, in
-which a smooth function (spline) of a predictor variable is estimated, 
-while accounting for globally specified smooth functions and random effects.
+\code{gamtree} recursively partitions a dataset into subgroups with 
+penalized GAMs, characterized by differences in the parameter estimates.
 }
 \examples{
-## GAM tree without global terms:
-gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
-summary(gt1)
-
-## GAM tree with global terms:
-gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
-              data = eco, cluster = eco$specimen)
-summary(gt2)
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
+summary(gt)
 
 }
 \seealso{

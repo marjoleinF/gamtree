@@ -7,7 +7,6 @@
 \method{plot}{gamtree}(
   x,
   which = "both",
-  which_terms = "both",
   residuals = TRUE,
   dim = NULL,
   ylim = "firstnode",
@@ -28,10 +27,6 @@ the tree do not convey a conditional function of the predictor on the $x$-axis
 (as plotted when "terms" is specified). They are a function of the predictor 
 on the $x$-axis, as well as all other predictors in the model and could thus be 
 referred to as 'marginal' fitted curves.}
-
-\item{which_terms}{character; \code{"local"}, \code{"global"} or \code{"both"}.
-Only used when argument \code{which} equal \code{"global"} or \code{"both"}.
-Specifies whether the local and/or global (smooth) terms should be plotted.}
 
 \item{residuals}{Only used when \code{which_terms = local}. Should residuals
 be plotted in the node-specific plots?}
@@ -75,13 +70,8 @@ caution.
 }
 
 \examples{
-gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, 
-               cluster = eco$specimen) 
-plot(gt1, which = "tree") # default is which = 'both'
-plot(gt1, which = "terms", gamplot_ctrl = list(shade = TRUE)) 
-gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
-              data = eco, cluster = eco$specimen) 
-plot(gt2, which = "tree") # default is which = 'both'
-plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE))
-
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, 
+               cluster = eco$Specimen) 
+plot(gt, which = "tree") # default is which = 'both'
+plot(gt, which = "terms")
 }
