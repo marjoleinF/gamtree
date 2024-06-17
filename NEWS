@@ -1,4 +1,18 @@
-Changes in Version 0.0.2 (August 2021):
+Changes in Version 0.0.3 (June 2024)
+
+  - Function splinetree added for partitioning unpenalized or parametric spline 
+      models.
+ 
+  - Although the previous implementation of gamtree was functional, the parameter 
+      stability tests were based on the 'wrong' derivatives, leading to
+      bad overfitting behavior. The current implementation of gamtree has 
+      more limited functionality, but uses proper derivatives for testing 
+      stability of smoothing splines. It employs gamm4 to fit the GAMs, which
+      provides a full mixed-effects specification of GAMs. It employs merDeriv
+      to obtain valid derivatives or scores. The function is now much slower, 
+      but should yield accurate subgroups and exhibit much less overfitting.
+
+Changes in Version 0.0.2 (August 2021)
 
   - Many bug fixes, including: 
 
@@ -15,6 +29,6 @@ Changes in Version 0.0.2 (August 2021):
 
 
 
-Changes in Version 0.0.1 (June 2019):
+Changes in Version 0.0.1 (June 2019)
 
   - First development version, available from github.

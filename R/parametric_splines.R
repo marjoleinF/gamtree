@@ -59,9 +59,9 @@ setup.spline <- function(spline, data, ...) {
 #' @param data a \code{data.frame} containing the variable referred to in \code{spline}.
 #' @param family family specification for \code{\link[glmertree]{glmertree}}. See 
 #' \code{\link[stats]{glm}} documentation for families.
-#' @param ... additional arguments to be passed to function \code{lmertree} 
+#' @param ... additional arguments to be passed to function \code{\link[glmertree]{lmertree}} 
 #' (default, i.e., \code{family = "gaussian"})
-#' or \code{glmertree} (\code{family} other than \code{gaussian}).
+#' or \code{\link[glmertree]{glmertree}} (\code{family} other than \code{gaussian}).
 #' @return A object of class\code{"splinetree" }and \code{"lmertree"} or \code{"glmertree"}.
 #' @examples  sp <- splinetree(Pn ~ ns(PAR, df = 5) | Specimen | Species, data = eco)
 #' sp

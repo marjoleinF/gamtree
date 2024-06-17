@@ -2,7 +2,10 @@ utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster", 
 
 ## TODO: Can enforce knot locations to apply to all nodes similarly? Yes, but only with bs = "cr"
 ## basis, and knots have to be passed to function gam / gamm4.
-## TODO: Can use a cubic spline basis in gamtree? Yes.
+## C
+
+## TODO: Can use a cubic spline basis in gamtree? Yes, just pass bs = "cr" to function s.
+
 ## TODO: Get the node-specific plots with CIs from mgcv and put them together in one plot
 
 
