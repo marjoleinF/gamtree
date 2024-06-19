@@ -12,7 +12,7 @@ gamtree(
   offset = NULL,
   verbose = FALSE,
   gam_ctrl = list(),
-  mob_ctrl = mob_control(),
+  mob_ctrl = mob_control(parm = c(1, 2, 4)),
   alt_formula = NULL,
   ...
 )
@@ -81,7 +81,7 @@ observations; \code{\link{plot.gamtree}} for plotting the tree and variables' ef
 penalized GAMs, characterized by differences in the parameter estimates.
 }
 \examples{
-gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$Specimen)
 summary(gt)
 
 }

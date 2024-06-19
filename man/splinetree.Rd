@@ -15,9 +15,9 @@ splinetree(formula, data, family = "gaussian", ...)
 \item{family}{family specification for \code{\link[glmertree]{glmertree}}. See 
 \code{\link[stats]{glm}} documentation for families.}
 
-\item{...}{additional arguments to be passed to function \code{lmertree} 
+\item{...}{additional arguments to be passed to function \code{\link[glmertree]{lmertree}} 
 (default, i.e., \code{family = "gaussian"})
-or \code{glmertree} (\code{family} other than \code{gaussian}).}
+or \code{\link[glmertree]{glmertree}} (\code{family} other than \code{gaussian}).}
 }
 \value{
 A object of class\code{"splinetree" }and \code{"lmertree"} or \code{"glmertree"}.

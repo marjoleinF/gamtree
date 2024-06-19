@@ -25,6 +25,6 @@ with caution.
 
 \examples{
 ## GAM tree without global terms:
-gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$specimen)
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$Specimen)
 summary(gt)
 }

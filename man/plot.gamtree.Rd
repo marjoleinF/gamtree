@@ -7,7 +7,6 @@
 \method{plot}{gamtree}(
   x,
   which = "both",
-  residuals = TRUE,
   dim = NULL,
   ylim = "firstnode",
   treeplot_ctrl = list(),
@@ -27,9 +26,6 @@ the tree do not convey a conditional function of the predictor on the $x$-axis
 (as plotted when "terms" is specified). They are a function of the predictor 
 on the $x$-axis, as well as all other predictors in the model and could thus be 
 referred to as 'marginal' fitted curves.}
-
-\item{residuals}{Only used when \code{which_terms = local}. Should residuals
-be plotted in the node-specific plots?}
 
 \item{dim}{numeric vector of length two. Specifies how many rows and columns 
 of plots should be fit on a single page.

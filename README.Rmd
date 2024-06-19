@@ -99,7 +99,7 @@ While functions `lmertree` and `glmertree` do allow for specifying splines direc
 Function `splinetree` first estimates the knot locations from the full dataset, so that the same knots can subsequently be used in all subgroups or nodes. It allows splines to be specified as would normally be done with functions `ns` or `bs`:
 
 ```{r}
-lt <- splinetree(Pn ~ ns(PAR, df = 5) | (1|Specimen) | Species, data = eco2, 
+st <- splinetree(Pn ~ ns(PAR, df = 5) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
 ```
 
@@ -110,19 +110,19 @@ Often, the partitioning variables may not be measured on the level of individual
 We can plot the resulting tree using the `plot` method. We use the `gp` argument to adjust the value of graphical parameters (see `?gpar` for a list of changeable parameters), here we use it to impove readability of the plot by reducing the size of plotting symbols:
 
 ```{r}
-plot(lt, which = "tree", gp = gpar(cex = .7))
+plot(st, which = "tree", gp = gpar(cex = .7))
 ```
 The resulting tree suggest that the Eugene and Sapium plants have the strongest reaction in terms of photosynthetic rate (`Pn`) to increased photosynthetically active radiation (`PAR`). 
 
 Although individual spline coefficients are difficult to interpret, they can be obtained using the `coef` method:
 
 ```{r}
-coef(lt)
+coef(st)
 ```
 Finally, using the `predict` method, we can obtain predictions for (new) observations:
 
 ```{r}
-predict(lt, newdata = eco[1:5,])  
+predict(st, newdata = eco[1:5,])  
 ```
 
 ### Choosing and evaluating the spline basis
@@ -132,8 +132,8 @@ As hinted at with the quote from Eilers and Marx (1996), choosing a good spline 
 The spline basis can be extracted from the fitted tree as follows:
 
 ```{r}
-sb <- lt$data$spline.PAR
-x <- lt$data$PAR
+sb <- st$data$spline.PAR
+x <- st$data$PAR
 ```
 
 Note that the name of the spline basis is always `spline.`, followed by the name of the predictor variable of interest. It is also necessary to extracted the original values of the predictor variable of interest (`x`).
@@ -147,11 +147,11 @@ rug(x)
 Choosing a more complex spline basis increases flexibility, but may also make the fitted curves too wiggly. For example, a cubic spline with many more degrees of freedom yields wigglyness especially at the boundaries of the predictor variable space:  
 
 ```{r}
-lt3 <- splinetree(Pn ~ bs(PAR, df = 15) | (1|Specimen) | Species, data = eco2, 
+st2 <- splinetree(Pn ~ bs(PAR, df = 15) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(lt3)
-sb <- lt2$data$spline.PAR
-x <- lt2$data$PAR
+plot(st2)
+sb <- st2$data$spline.PAR
+x <- st2$data$PAR
 matplot(x = x[order(x)], y = sb[order(x),], 
         type = "l", xlab = "PAR", ylab = "Spline basis function")
 rug(x)
@@ -160,11 +160,11 @@ rug(x)
 But note that the detected subgroups may actually be quite insensitive to different reasonable choices of degrees of freedom:
 
 ```{r}
-lt4 <- splinetree(Pn ~ ns(PAR, df = 2) | (1|Specimen) | Species, data = eco2, 
+st3 <- splinetree(Pn ~ ns(PAR, df = 2) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(lt4)
-sb <- lt4$data$spline.PAR
-x <- lt4$data$PAR
+plot(st3)
+sb <- st3$data$spline.PAR
+x <- st3$data$PAR
 matplot(x = x[order(x)], y = sb[order(x),], 
         type = "l", xlab = "PAR", ylab = "Spline basis function")
 rug(x)
@@ -198,8 +198,7 @@ The response must be a single variable. Continuous, count, binomial variables an
 We specify `Pn` as the response, regressed on a smoothing spline of `PAR`, and we specify `Species` as the only potential partitioning variable. Furthermore, we specify the `cluster` argument, to account for the fact that individual observations are nested within plants: 
 
 ```{r}
-gt <- gamtree(Pn ~ s(PAR, k = 5) | Species, data = eco, 
-              cluster = eco$Specimen)
+gt <- gamtree(Pn ~ s(PAR, k = 5) | Species, data = eco, cluster = Specimen)
 ```
 
 We can inspect the partition by plotting the tree (see `?plot.gamtree` for more info):
@@ -224,141 +223,20 @@ plot(gt, which = "terms",
 
 We used the `gamplot_ctrl` argument to pass additional arguments to function `plot.gam()` (from package **mgcv**). We specified the `shade` argument, so that the confidence interval are depicted with a grey shaded area. Note however, that the plotted confidence intervals are overly optimistic, because they do not account for the searching of the tree (subgroup) structure.
 
-
-
-### GAM-based recursive partition with global effects
-
-We will now include a global part in the fitted model. We add global terms to the earlier `gamtree` model, based on the `noise` and `cluster_id` variables. Both are in fact noise variables, so these should not have significant or substantial effects. They merely serve as an illustration of how to specify a global (i.e., subgroup-invariant) part of the model. We will specify `noise` as having a parametric (i.e., linear) effect and `cluster_id` as an indicator for a random intercept term (which can be fitted using function `s()` and specifying `bs = "re"`). 
- 
-To estimate both the local and global models, an iterative approach is taken:
-
-- Step 0: Initialize by assuming the global effects to be zero. 
-
-- Step 1: Given the current estimate of the global effects, estimate the partition (subgroup structure).
-
-- Step 2: Given the current estimate of the partition (subgroup structure), estimate the local and global effects.
-
-- Step 3: Repeat steps 1 and 2 until convergence (i.e., change in log-likelihood values from one iteration to the next is smaller than `abstol`).
-
-Note that in Step 0, the assumption of global effects being zero can be replaced with an assumption of there being no subgroups. This can be specified through use of the `globalstart` argument. The only difference is then, that estimation of the model will initialize with Step 2. 
- 
-```{r}
-gt2 <- gamtree(Pn ~ s(PAR) | noise + s(cluster_id, bs="re") | Species,
-               data = eco, cluster = eco$specimen)
-gt2$iterations
-```
-Estimation converged in two iterations. Probably because accounting for the global effects has little effect: the predictors for the global model are in fact noise variables, the global effects are thus 0 and the initial estimate of the global effects is already adequate. 
-
-We can obtain test statistics for the significance of the global and local effects in the full GAM using the `summary` method:
-
-```{r}
-summary(gt2)
-```
-
-Note that the standard errors and degrees of freedom for the smooth and parametric terms in the terminal nodes (i.e., those terms containing `.tree`) do not account for the searching of the tree structure and are therefore likely too low (overly optimistic), yielding too low standard errors and $p$ values.
-
-The effect of the local smooths are significant in every terminal tree node (again, these $p$ values are overly optimistic). As expected, the global fixed and random effects (`noise` and `s(cluster_id)`) are not significant. We will also see this in their estimated random-effects coefficients being close to zero:
-
-```{r}
-coef(gt2, which = 'global')
-```
-
-Note that by default, the `coef` method returns the local (node-specific) estimates, but we obtained the global coefficient estimates only through specifying the `which` argument (see also `?coef.gamtree`).
-
-We can plot the tree and the models fitted in each of the terminal nodes:
-
-```{r, fig.width=5, fig.height=4}
-plot(gt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
-par(mfrow = c(2, 2))
-plot(gt2, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .8, 
-                                               cex.axis = .6, cex.lab = .6))
-```
-
-
-
-
-
-### Checking adequacy of the basis used to represent the smooth terms
-
-The plots indicate that the lines of the fitted smooths are somewhat wiggly, especially in node 2. Perhaps the default dimension for the basis used to represent the smooth term, `k = 9`, may not be adequate for these data. In addition to the above visual inspection of how well the smooths appear to approximate the datapoints, we can use the `gam.check()` function from package **mgcv** to check the adequacy of the dimension of the basis used to represent the smooth term:
-
-```{r, fig.keep = 'none'}
-gam.check(gt2$gamm)
-```
-
-By default, `gam.check()` also yields residual plots, which are omitted here. The values of `k-index` and `p-value` above indicate that the default `k = 9` may be too low. This is in contrast with the somewhat too wiggly pattern of the smooths we observed in the plots of the smooth terms and datapoints, which suggests the value of `k` may be too high.
-
-Based on the `gam.check()` function results, we could increase the value of `k`, to see if that increases the reported `edf` substantially:
-
-```{r, fig.width=4, fig.height=3}
-gt3 <- gamtree(Pn ~ s(PAR, k=18L) | noise + s(cluster_id, bs = "re") | Species, 
-               data = eco, cluster = eco$specimen)
-plot(gt3, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
-```
-
-We obtained a tree with a single split. Increased flexibility of the smooth curves seems to have accounted for the difference between Eugene and Sapium we saw in the earlier tree. Otherwise, the results seem the same as before: The response variable values appear somewhat lower at the start in node 2, compared to node 3. This difference seems to have increased at the last measurements.
-
-We again apply the `gam.check()` function:
-
-```{r, fig.keep = 'none'}
-gam.check(gt3$gamm)
-```
-
-The `edf` values have not increased substantially and the `k-index` values are similar to the earlier values. Thus, increasing the number of knots to a larger number than the default seems not necessary. 
-
-We can also *reduce* the value of `k` to see if that yields less wiggly lines, and perhaps a different tree:
-
-```{r, fig.width = 4, fig.height=3}
-gt4 <- gamtree(Pn ~ s(PAR, k=5L) | noise + s(cluster_id, bs="re") | Species,
-               data = eco, cluster = eco$specimen, verbose = FALSE)
-plot(gt4, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
-```
-
-
-```{r, fig.width = 5, fig.height=4}
-par(mfrow = c(2, 2))
-plot(gt4, which = "terms", gamplot_ctrl = list(shade = TRUE, cex.main = .8, 
-                                               cex.axis = .6, cex.lab = .6))
-```
-
-To the eye, a lower value dimension for the bases to represent the smooth terms seems more appropriate; the lower flexibility leads less wiggly lines. The lower value for `k` does not seem to yield a different tree or conclusions anyway. So we will stick with the value of `k = 5`.
-
-
-### Further inspection of the fitted model
-
 We obtain a summary of the fitted full GAM using the `summary` method:
 
 ```{r}
-summary(gt4)
+summary(gt)
 ```
 
-Note that the standard errors and degrees of freedom for the smooth and parametric terms in the terminal nodes (i.e., those terms containing `.tree`) do not account for the searching of the tree structure and are therefore likely too low (overly optimistic), yielding too low $p$ values.
-
-The `Parameteric coefficients` indicate that the intercepts in every terminal node are significantly different from 0. In light of the standard errors, the differences in intercepts also seem significant. Thus, the starting values appear highest in node 5, and lowest in node 2.
-
-The `Approximate significance of smooth terms` indicate significance of the smooth terms in all three terminal nodes.
-
-Using the `coef` method we can print the coefficients from the terminal nodes:
-
-```{r}
-coef(gt4)
-```
-
-We can do an additional check on the observation-level contributions to the gradient. We can do this using the `check_grad()` function. It computes the sum of the observation-wise contributions to the gradient. These sums should be reasonably close to zero:
-
-```{r}
-check_grad(gt4)
-```
-
-The sum of the gradient contributions seem reasonably close to zero.
 
 
-#E# Specifying non-default arguments for the partitioning
+## Specifying non-default arguments for the partitioning
 
 Let's say would prefer to collapse nodes 4 and 5, because we do not think the differences between the two species are relevant. We can do that through specifying the `maxdepth` argument of function `mob()`, which is used internally by function `gamtree()` to perform the partitioning (splitting). We can pass additional arguments to function `mob()` with the `mob_ctrl` argument:
 
 ```{r}
-gt5 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, cluster = eco$specimen, 
+gamt2 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, cluster = Specimen, 
                mob_ctrl = mob_control(maxdepth = 2L))
 ```
 
@@ -367,37 +245,7 @@ Note that function `mob_control()` (from package **partykit**) is used here, to 
 We inspect the result:
 
 ```{r, fig.width = 4, fig.height=3}
-plot(gt5, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
-```
-
-We can again check whether the sums of the observation-wise gradient contributions are reasonably close to zero:
-
-```{r}
-check_grad(gt5)
-```
-
-the observation-wise gradient contributions sum to values reasonably close to 0.
-
-
-
-### Specifying multiple terms and/or predictors for the node-specific GAMs
-
-Multiple predictor variables can be specified for the node-specific model, as is customary with function `gam()`. Parametric as well as non-parametric terms can be specified, both for the global as well as for the local terms. But note that specifying more than a small number of terms for the node-specific models is probably not a good idea; it will yield results which are difficult to interpret (because of the large number of coefficients) and possibly unstable, or may lead to estimation errors. The higher the complexity (i.e., the higher the df for the smooth term, the higher the number of predictor variables) of the node-specific model, the more likely that one or more spurious subgroups will be detected, or actual subgroups may be obfuscated. 
-
-Specifying a predictor for the node-specific model which is known to be noise is not a good idea in the real world, but here we do it anyway for illustration purposes. We add a parametric (i.e., linear) effect of `noise` in the node-specific model:
-
-```{r}
-gt6 <- gamtree(Pn ~ s(PAR, k=5L) + noise | s(cluster_id, bs="re") | Species,
-               data = eco, cluster = eco$specimen)
-summary(gt6)
-```
-
-We can also employ different functions than `s()` for the node-specific (or global) GAMs:
-
-```{r}
-gt9 <- gamtree(Pn ~ te(PAR, noise) | s(cluster_id, bs="re") | Species,
-               data = eco, mob_ctrl = mob_control(maxdepth = 3L))
-summary(gt9)
+plot(gamt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 ```
 
 
@@ -412,6 +260,5 @@ Fokkema, M., & Zeileis, A. (in press). Subgroup detection in linear growth curve
 Wang, T., & Merkle, E. C. (2018). merDeriv: derivative computations for linear mixed effects models with application to robust standard errors. *Journal of Statistical Software*, *87*, 1-16.
 
 Wood, S.N. (2011) Fast stable restricted maximum likelihood and marginal likelihood estimation of semiparametric generalized linear models. *Journal of the Royal Statistical Society (B)*, *73*(1), 3-36.
-
 
 Zeileis, A., Hothorn, T., & Hornik, K. (2008). Model-based recursive partitioning. *Journal of Computational and Graphical Statistics*, *17*(2), 492-514.

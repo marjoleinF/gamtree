@@ -102,8 +102,22 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
                 paste(local_vars, collapse = " + "), "|", 
                 paste(part_vars, collapse = " + ")))
   
+  q_cluster <- substitute(cluster)
+  if (!is.null(q_cluster)) {
+    data$.cluster <- eval(q_cluster, data)
+    if (length(eval(q_cluster, data)) != nrow(data))
+      warning("Variable lengths differ for 'cluster' and 'data'.", immediate. = TRUE)
+  }
+  if (!is.null(q_cluster) && !inherits(data$.cluster, c("numeric", "character", "factor", "integer"))) {
+    warning("Argument 'cluster' should specify an object of class numeric, factor or character, or should be NULL.", immediate. = TRUE)
+  }
+  
   ## Prepare data
-  data <- data[ , c(as.character(response), local_vars, part_vars)]    
+  data <- if (is.null(q_cluster)) {
+    data[ , c(as.character(response), local_vars, part_vars)]
+  } else {
+    data[ , c(as.character(response), local_vars, part_vars, ".cluster")]
+  }
   N <- nrow(data)
   data <- data[complete.cases(data), ]
   if (nrow(data) != N) {
@@ -111,9 +125,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
     N <- nrow(data)
   }
   data$.weights <- if (is.null(weights)) 1 else weights
-  if (!is.null(cluster)) data$.cluster <- cluster
-  ## TODO: Allow for cluster argument to refer to one of the columns of data
-  
+
   if (is.null(mob_ctrl)) {
     mob_ctrl <- mob_control(verbose = verbose, xtype = "data.frame",
                             ytype = "data.frame")
@@ -130,7 +142,7 @@ gamtree <- function(formula, data, weights = NULL, cluster = NULL,
   data$.offset <- if (is.null(offset)) 0L else offset
   
   ## grow tree
-  if (is.null(cluster)) {
+  if (is.null(q_cluster)) {
     tree <- mob(tf, data = data, local_gam_form = lgf, fit = gamfit, 
                 weights = .weights, offset = .offset, 
                 control = mob_ctrl, gam_ctrl = gam_ctrl, ...)   
@@ -226,7 +238,7 @@ gamfit <- function(y, x, start = NULL, weights = NULL, offset = NULL,
 #' Prints the local and/or global terms in a fitted GAM tree.  
 #'
 #' @param x object of class \code{gamtree}.
-#' @param ... further arguments to be passed to \code{\link[partykit{print.modelparty}}.
+#' @param ... further arguments to be passed to \code{\link[partykit]{print.modelparty}}.
 #' @export
 #' @examples
 #' ## GAM tree without global terms:
@@ -245,14 +257,14 @@ print.gamtree <- function(x, ...) {
 }
 
 print_gam <- function (x, ...) {
-  cat("Formula:\n")
+  cat("\nFormula:\n")
   if (is.list(x$formula)) 
     for (i in 1:length(x$formula)) print(x$formula[[i]]) else print(x$formula)
   n.smooth <- length(x$smooth)
   if (n.smooth == 0) 
     cat("Total model degrees of freedom", sum(x$edf), "\n") else {
       edf <- 0
-      cat("\nEstimated degrees of freedom:\n")
+      cat("\nEstimated degrees of freedom:\n")gt
       for (i in 1:n.smooth) edf[i] <- sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
       edf.str <- format(round(edf, digits = 4), digits = 3, scientific = FALSE)
       for (i in 1:n.smooth) {
@@ -317,8 +329,6 @@ summary.gamtree <- function(object, ...) {
 #  @param which_terms character; \code{"local"}, \code{"global"} or \code{"both"}.
 #  Only used when argument \code{which} equal \code{"global"} or \code{"both"}.
 #  Specifies whether the local and/or global (smooth) terms should be plotted.
-#' @param residuals Only used when \code{which_terms = local}. Should residuals
-#' be plotted in the node-specific plots?
 #' @param dim numeric vector of length two. Specifies how many rows and columns 
 #' of plots should be fit on a single page.
 #' \code{NULL} (the default) has the routine leave all settings as they are.
@@ -353,7 +363,7 @@ summary.gamtree <- function(object, ...) {
 #' plot(gt, which = "terms")
 #' @importFrom graphics plot par
 #' @export
-plot.gamtree <- function(x, which = "both", residuals = TRUE,
+plot.gamtree <- function(x, which = "both", 
                          dim = NULL, ylim = "firstnode", treeplot_ctrl = list(), 
                          gamplot_ctrl = list(), ...) {
   
@@ -445,7 +455,6 @@ plot.gamtree <- function(x, which = "both", residuals = TRUE,
     for (i in terminal_nodes) {
       gamplot_ctrl[["x"]] <- x$tree[[i]]$node$info$object
       gamplot_ctrl[["main"]] <- paste("node", i)
-      if (residuals) gamplot_ctrl[["residuals"]] <- TRUE  
       do.call(plot, gamplot_ctrl)   
     }
     #}
@@ -628,13 +637,15 @@ check_grad <- function(object, var = FALSE, return_fits = FALSE) {
   gamfits <- refit.modelparty(object$tree)
   if (inherits(gamfits, "list")) {
     ## Then at least one split was implemented and gamfits is a list of GAM fits
-    gradients <- colSums(estfun(gamfits[[1]]))
+    est_fun <- estfun(gamfits[[1]]$mer)
+    gradients <- colSums(est_fun)
     gradients <- as.data.frame(t(gradients))
-    vars <- apply(estfun(gamfits[[1]]), 2, var)
+    vars <- apply(est_fun, 2, var)
     vars <- as.data.frame(t(vars))
     for (i in 2L:length(object$tree)) {
-      gradients[i, ] <- colSums(estfun(gamfits[[i]]))
-      vars[i, ] <- apply(estfun(gamfits[[i]]), 2, var)
+      est_fun <- estfun(gamfits[[i]]$mer)
+      gradients[i, ] <- colSums(est_fun)
+      vars[i, ] <- apply(est_fun, 2, var)
     }
   } else {
     ## Then no splits were implemented and gamfits is a single GAM fit
