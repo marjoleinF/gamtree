@@ -1,12 +1,13 @@
 utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster", "current_offset"))
 
-## TODO: Can enforce knot locations to apply to all nodes similarly? Yes, but only with bs = "cr"
-## basis, and knots have to be passed to function gam / gamm4.
-## C
+## TODO: Can enforce knot locations to apply to all nodes similarly? Yes.
+## TODO: Get the node-specific plots with CIs from mgcv and put them together in one plot.
+## TODO: Create cv.splinetree and cv.gamtree functions to obtain hypothesis tests.
+## TODO: Allows gamtree to use fixed splines with mgcv. This might make computations much faster.
+## TODO: Build unit tests.
 
-## TODO: Can use a cubic spline basis in gamtree? Yes, just pass bs = "cr" to function s.
+## Done: Can use a cubic spline basis in gamtree? Yes, just pass bs = "cr" to function s.
 
-## TODO: Get the node-specific plots with CIs from mgcv and put them together in one plot
 
 
 
@@ -264,7 +265,7 @@ print_gam <- function (x, ...) {
   if (n.smooth == 0) 
     cat("Total model degrees of freedom", sum(x$edf), "\n") else {
       edf <- 0
-      cat("\nEstimated degrees of freedom:\n")gt
+      cat("\nEstimated degrees of freedom:\n")
       for (i in 1:n.smooth) edf[i] <- sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
       edf.str <- format(round(edf, digits = 4), digits = 3, scientific = FALSE)
       for (i in 1:n.smooth) {

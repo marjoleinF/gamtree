@@ -125,7 +125,7 @@ plot.splinetree <- function(x, ...) {
   }
   x$tree$node <- as.partynode(tree_node)
   class(x) <- ifelse(inherits(x, "lmertree"), "lmertree", "glmertree")
-  plot(x$tree, ...)
+  plot(x, ...)
   
 }
 
