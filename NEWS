@@ -2,6 +2,11 @@ Changes in Version 0.0.3 (June 2024)
 
   - Function splinetree added for partitioning unpenalized or parametric spline 
       models.
+
+  - Score-based conditional inference tests can now be used to fit smoothing-spline
+      trees. This much reduces computational load. Function gamtree allows to choose
+      between use of model-based recursive partitioning (method = "mob") and 
+      conditional inference trees (method = "ctree").  
  
   - Although the previous implementation of gamtree was functional, the parameter 
       stability tests were based on the 'wrong' derivatives, leading to

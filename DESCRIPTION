@@ -2,12 +2,18 @@ Package: gamtree
 Title: GAM-based Recursive Partitioning
 Version: 0.0.3
 Authors@R: person("Marjolein", "Fokkema", email = "m.fokkema@fsw.leidenuniv.nl", role = c("aut", "cre"))
-Description: Recursively partitions the observations in a dataset, based on the parameters of a locally
-	specified generalized additive model (GAM), while possibly also estimating globally specified GAM 
-	terms. Uses package mgcv for fitting smooth and parametetric terms, used function package partykit 
-	for recursive partitioning.
+Description: Recursively partitions the observations in a dataset, based on the parameters of 
+             a generalized additive model (GAM). Function splinetree implements partitioning based
+             on parametric or non-penalized spline models. It offers faster computational speed and
+             more flexibility for modeling multilevel and longitudinal data. Function gamtree
+             implements partitioning based on semi-parametric or penalized spline models, a.k.a. 
+             smoothing splines. It requires less user involvement in correctly specifying the
+             splines and knots, but has a heavier computational load and offers less flexibility in
+             modeling multilevel and longitudinal data. Packages mgcv and splines are used for 
+             spline and model estimation, packages partykit and merDeriv are used for partitioning
+             and derivative computations. 
 Depends: R (>= 3.5.3), glmertree
-Imports: Formula, mgcv, partykit, sandwich, lme4, gamm4, merDeriv
+Imports: Formula, splines, mgcv, partykit, lme4, gamm4, merDeriv, nlme
 License: GPL-2 | GPL-3
 Encoding: UTF-8
 LazyData: true

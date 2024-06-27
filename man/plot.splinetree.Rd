@@ -4,11 +4,20 @@
 \alias{plot.splinetree}
 \title{Plotting function for visualization of spline-based (g)lmertrees.}
 \usage{
-\method{plot}{splinetree}(x, ...)
+\method{plot}{splinetree}(x, which = "both", fitted = "marginal", ...)
 }
 \arguments{
 \item{x}{fitted object of class \code{(g)lmertree} containing splines specified
 by \code{\link{setup.spline}} in the terminal node model.}
+
+\item{which}{character, "both", "tree" or "ranef". Other options are available, see
+\code{\link[glmertree]{plot.glmertree}} and \code{\link[glmertree]{plot.lmertree}}, 
+but might be less helpful for spline models.}
+
+\item{fitted}{character, "marginal" (default), "combined" or "none". 
+Specifies whether and how fitted values should be computed and visualized. 
+See \code{\link[glmertree]{plot.lmertree}} or \code{\link[glmertree]{plot.glmertree}}
+for further detail.}
 
 \item{...}{additional arguments to be passed to \code{\link[glmertree]{plot.lmertree}}
 or \code{\link[glmertree]{plot.glmertree}}.}

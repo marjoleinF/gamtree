@@ -2,7 +2,7 @@
 % Please edit documentation in R/gamtree.R
 \name{predict.gamtree}
 \alias{predict.gamtree}
-\title{Predictions from fitted GAM tree}
+\title{Get predictions from fitted GAM tree}
 \usage{
 \method{predict}{gamtree}(object, newdata = NULL, type = "link", ...)
 }
@@ -14,18 +14,18 @@ covariates for which predictions should be returned. The default
 (\code{NULL}) returns predictions for the original training data.}
 
 \item{type}{character vector of length 1, specifying the type of prediction
-to be returned. \code{"link"} (the default) returns values on the scale
-of the linear predictor. Alternatively, \code{"response"} returns predictions
-on the scale of the response variable; \code{"node"} returns an integer vector
-of node identifiers.}
+to be returned. \code{"response"} (the default) returns values on the scale
+of the response variable. Alternatively, \code{"link"} (only available if 
+\code{method = "mob"})returns values on the scale of the linear predictor;
+\code{"node"} returns an integer vector of node identifiers.}
 
-\item{...}{further arguments to be passed to \code{\link{mgcv}predict.gam}.}
+\item{...}{further arguments to be passed to \code{\link[partykit]{predict.party}}.}
 }
 \value{
 Returns a vector of predicted values.
 }
 \description{
-Takes a fitted GAM tree (of class \code{"gamtree"}) and produces 
+Takes a fitted GAM tree (of class \code{"gamtree"}) and returns 
 predictions given a new set of values for the model covariates,
 or for the original covariate values used for fitting the GAM tree.
 }

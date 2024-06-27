@@ -2,32 +2,21 @@
 % Please edit documentation in R/gamtree.R
 \name{coef.gamtree}
 \alias{coef.gamtree}
-\title{Extract estimated coefficients of a GAM tree}
+\title{Extract coefficients from a GAM tree.}
 \usage{
-\method{coef}{gamtree}(object, which = "local", ...)
+\method{coef}{gamtree}(object, which = "fixed", ...)
 }
 \arguments{
-\item{object}{an object of class \code{gamtree}.}
+\item{object}{an object of class \code{"gamtree"}.}
 
-\item{which}{character. Specifies whether local (\code{"local"}; 
-node-specific estimates from the tree) or globally (\code{"global"})
-estimated coefficients should be returned.}
+\item{which}{character. Either \code{"fixed"} (default) or \code{"random"}, 
+indicating that fixed- or random-effects coefficients should be returned,
+respectively.}
 
-\item{...}{currently not used.}
-}
-\value{
-Returns a matrix (if \code{which = "local"}) or a vector (if 
-\code{which = "global"}) with estimated coefficients. 
-## GAM tree without global terms:
-gt1 <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$Specimen)
-coef(gt1)
-
-## GAM tree with global terms:
-gt2 <- gamtree(Pn ~ s(PAR, k = 5L) | s(cluster_id, bs = "re") + noise | Species, 
-              data = eco, cluster = eco$Specimen)
-coef(gt2)
-coef(gt2, which = "global")
+\item{...}{further arguments to be passed to \code{\link[lme4]{fixef.merMod}} or 
+\code{\link[lme4]{ranef.merMod}}.}
 }
 \description{
-Returns the estimates global or local coefficients of a GAM tree.
+\code{coef.gamtree} extracts fixed- or random-effects coefficients from 
+a GAM tree.
 }

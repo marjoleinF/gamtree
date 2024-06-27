@@ -9,13 +9,12 @@
 \arguments{
 \item{x}{object of class \code{gamtree}.}
 
-\item{...}{further arguments to be passed to \code{\link[partykit]{print.modelparty}}.}
+\item{...}{further arguments to be passed to \code{\link[partykit]{print.modelparty}} or}
 }
 \description{
 Prints the local and/or global terms in a fitted GAM tree.
 }
 \examples{
-## GAM tree without global terms:
-gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$Specimen)
+gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = Specimen)
 gt ## or: print(gt)
 }

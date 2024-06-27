@@ -100,6 +100,13 @@ splinetree <- function(formula, data, family = "gaussian", ...) {
 #' 
 #' @param x fitted object of class \code{(g)lmertree} containing splines specified
 #' by \code{\link{setup.spline}} in the terminal node model.
+#' @param which character, "both", "tree" or "ranef". Other options are available, see
+#' \code{\link[glmertree]{plot.glmertree}} and \code{\link[glmertree]{plot.lmertree}}, 
+#' but might be less helpful for spline models.   
+#' @param fitted character, "marginal" (default), "combined" or "none". 
+#' Specifies whether and how fitted values should be computed and visualized. 
+#' See \code{\link[glmertree]{plot.lmertree}} or \code{\link[glmertree]{plot.glmertree}}
+#' for further detail.
 #' @param ... additional arguments to be passed to \code{\link[glmertree]{plot.lmertree}}
 #' or \code{\link[glmertree]{plot.glmertree}}.
 #' @examples
@@ -109,7 +116,7 @@ splinetree <- function(formula, data, family = "gaussian", ...) {
 #' @seealso \code{\link{setup.spline}} \code{\link{predict.splinetree}} 
 #' \code{\link[glmertree]{plot.lmertree}} \code{\link[glmertree]{plot.glmertree}}
 #' @export
-plot.splinetree <- function(x, ...) {
+plot.splinetree <- function(x, which = "both", fitted = "marginal", ...) {
   
   ## Replace spline basis functions with original x
   spline_name <- names(x$tree$data)[grep("spline", names(x$tree$data))]
@@ -125,7 +132,7 @@ plot.splinetree <- function(x, ...) {
   }
   x$tree$node <- as.partynode(tree_node)
   class(x) <- ifelse(inherits(x, "lmertree"), "lmertree", "glmertree")
-  plot(x, ...)
+  plot(x, which = "both", fitted = "marginal", ...)
   
 }
 

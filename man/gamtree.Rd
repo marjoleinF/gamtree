@@ -8,11 +8,14 @@ gamtree(
   formula,
   data,
   weights = NULL,
+  REML = TRUE,
+  method = "mob",
   cluster = NULL,
   offset = NULL,
   verbose = FALSE,
+  parm = c(1, 2, 4),
   gam_ctrl = list(),
-  mob_ctrl = mob_control(parm = c(1, 2, 4)),
+  tree_ctrl = list(),
   alt_formula = NULL,
   ...
 )
@@ -35,11 +38,21 @@ of the model formula. See Examples.}
 A weight of 2, for example, is equivalent to having made exactly the same 
 observation twice.}
 
-\item{cluster}{optional numeric or factor vector with a cluster ID to be 
-employed for clustered covariances in the parameter stability tests.
+\item{REML}{logical, defaults to \code{TRUE}. Passed on to `gamm4` and in turn `lmer` (but 
+not `glmer`) fitting routines to control whether REML or ML estimation is used.}
+
+\item{method}{character, one of \code{"ctree"} or \code{"mob"}, indicates which
+partitioning algorithm should be used. See details below.}
+
+\item{cluster}{optional, a name refering to a colum of \code{data}, or a 
+numeric or factor vector with a cluster ID to be 
+employed for clustered covariances in the parameter stability tests. 
+Most useful if \code{method = "mob"}, for \code{method = "ctree"} probably
+less so as it may yield overly conservative splitting. 
 This argument should be used when the partitioning variables are not measured
 on the individual observation level, but on a higher level. E.g., when 
-the response variables consists of repeated measurements on multiple}
+the response variables consists of repeated measurements of the same
+respondents.}
 
 \item{offset}{numeric vector of length \code{nrow(data)}. Supplies model 
 offset for use in fitting. Note that this offset will always be completely 
@@ -50,39 +63,65 @@ every iteration? If true, the iteration number, information on the
 splitting procedure, and the log-likelihood (with df) value of the fitted 
 full mixed-effects gam model is printed.}
 
-\item{gam_ctrl}{a list of fit control parameters to replace defaults returned by 
-\code{\link[mgcv]{gam.control}}. Values not set assume default values.}
+\item{parm}{vector of one or more integers, indicating which parameters should be
+included in the parameter stability tests. The default \code{c(1, 2, 4)} includes
+the intercept, linear slope and error variance. The 3rd parameter is the variance
+of smooth term. It is excluded by default, because its inclusion yields too high
+power in many situations.}
 
-\item{mob_ctrl}{a list with control parameters as returned by 
-\code{\link[partykit]{mob_control}} to be passed to function 
-\code{\link[partykit]{mob}}. Note: argument `xtype` is set to 
-`data.frame`, by default, and cannot be adjusted.}
+\item{gam_ctrl}{a list of fit control parameters to replace defaults returned by 
+\code{\link[mgcv]{gam.control}}.}
+
+\item{tree_ctrl}{a \code{list} of one or more control parameters as accepted by 
+\code{\link[partykit]{mob_control}} (to be passed to function 
+\code{\link[partykit]{mob}} if \code{method = "mob"}), or 
+\code{\link[partykit]{ctree_control}} (to be passed to function
+\code{\link[partykit]{ctree}} is \code{method = "ctree"}). 
+Note: arguments \code{xtype} and \code{ytype} of \code{mob_control} are set to \code{"data.frame"}, 
+by default, 
+this cannot be changed. Argument \code{parm} of \code{mob_control} will be overruled
+by the argument of the same name of the current function.}
 
 \item{alt_formula}{list with two elements, for specifying non-standard model formulae
 for GAM. E.g., the formula list required for use of the \code{\link[mgcv]{multinom}}
 family.}
 
-\item{...}{additional arguments to be passed to function \code{\link[mgcv]{gam}}. 
-The same arguments will be employed for the local
-(node-specific) GAMs, and the global GAM (if specified in the model \code{formula}).}
+\item{...}{additional arguments to be passed to function \code{\link[gamm4]{gamm4}}.}
 }
 \value{
 Returns an object of class \code{"gamtree"}. This is a list, containing
-(amongst others) the GAM-based recursive partition (in \code{$tree}), and the 
-fitted full GAM model with local and/or global fitted effects (in \code{$gamm}. 
+(amongst others) the GAM-based recursive partition (in \code{$tree}). 
 The following methods are available to extract information from the fitted object:
 \code{\link{predict.gamtree}}, for obtaining predicted values for training and new
 observations; \code{\link{plot.gamtree}} for plotting the tree and variables' effects; 
-\code{\link{coef.gamtree}} for obtaining the estimated coefficients; 
-\code{\link{summary.gamtree}} for a summary of the fitted model.
+\code{\link{coef.gamtree}}, \code{\link{fixef.gamtree}} and \code{\link{ranef.gamtree}}  
+for extracting estimated coefficients. \code{\link{VarCorr.gamtree}} for extracting
+random-effects (co)variances, \code{\link{summary.gamtree}} for a summary of the 
+fitted models.
 }
 \description{
 \code{gamtree} recursively partitions a dataset into subgroups with 
 penalized GAMs, characterized by differences in the parameter estimates.
 }
+\details{
+MOB is short for model-based recursive
+partitioning, ctree is short for conditional inference tree. MOB is 
+based more strongly on parametric theory, thereby allowing for easy inclusion 
+of clustering structures into the estimation procedure (see also argument
+\code{cluster}), yielding similar to a GEE-type approach for estimation of 
+multilevel and longitudinal data structures. Yet, computation time for MOB is much
+larger than for ctree, which is mostly due to how it searches for
+the optimal splitting value, after the variable for splitting
+has been selected. ctree uses tests based on permutation theory, 
+and thereby offers a less parametrically oriented approach. It is much
+faster than MOB, but does not provide a natural way of accounting
+for multilevel or longitudinal data structures.
+}
 \examples{
-gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = eco$Specimen)
-summary(gt)
+gt_m <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, cluster = Specimen)
+summary(gt_m)
+gt_c <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, method = "ctree")
+summary(gt_c)
 
 }
 \seealso{

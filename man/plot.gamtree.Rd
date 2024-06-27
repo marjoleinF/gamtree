@@ -7,7 +7,6 @@
 \method{plot}{gamtree}(
   x,
   which = "both",
-  dim = NULL,
   ylim = "firstnode",
   treeplot_ctrl = list(),
   gamplot_ctrl = list(),
@@ -26,12 +25,6 @@ the tree do not convey a conditional function of the predictor on the $x$-axis
 (as plotted when "terms" is specified). They are a function of the predictor 
 on the $x$-axis, as well as all other predictors in the model and could thus be 
 referred to as 'marginal' fitted curves.}
-
-\item{dim}{numeric vector of length two. Specifies how many rows and columns 
-of plots should be fit on a single page.
-\code{NULL} (the default) has the routine leave all settings as they are.
-Using \code{par(mfrow = c( , ))} before plotting then provides control over 
-the plot dimensions (and number of pages).}
 
 \item{ylim}{\code{"firstplot"} (default), \code{NULL}, or a numeric vector of 
 length 2. Only used for plotting the terminal-node models (not the tree). 
@@ -67,7 +60,7 @@ caution.
 
 \examples{
 gt <- gamtree(Pn ~ s(PAR, k = 5L) | Species, data = eco, 
-               cluster = eco$Specimen) 
+               cluster = Specimen) 
 plot(gt, which = "tree") # default is which = 'both'
 plot(gt, which = "terms")
 }
