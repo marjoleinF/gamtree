@@ -4,7 +4,7 @@
 \alias{plot.splinetree}
 \title{Plotting function for visualization of spline-based (g)lmertrees.}
 \usage{
-\method{plot}{splinetree}(x, which = "both", fitted = "marginal", ...)
+\method{plot}{splinetree}(x, which = "all", fitted = "marginal", ...)
 }
 \arguments{
 \item{x}{fitted object of class \code{(g)lmertree} containing splines specified

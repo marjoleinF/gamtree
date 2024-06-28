@@ -116,7 +116,7 @@ splinetree <- function(formula, data, family = "gaussian", ...) {
 #' @seealso \code{\link{setup.spline}} \code{\link{predict.splinetree}} 
 #' \code{\link[glmertree]{plot.lmertree}} \code{\link[glmertree]{plot.glmertree}}
 #' @export
-plot.splinetree <- function(x, which = "both", fitted = "marginal", ...) {
+plot.splinetree <- function(x, which = "all", fitted = "marginal", ...) {
   
   ## Replace spline basis functions with original x
   spline_name <- names(x$tree$data)[grep("spline", names(x$tree$data))]
@@ -132,7 +132,7 @@ plot.splinetree <- function(x, which = "both", fitted = "marginal", ...) {
   }
   x$tree$node <- as.partynode(tree_node)
   class(x) <- ifelse(inherits(x, "lmertree"), "lmertree", "glmertree")
-  plot(x, which = "both", fitted = "marginal", ...)
+  plot(x, which = which, fitted = "marginal", ...)
   
 }
 

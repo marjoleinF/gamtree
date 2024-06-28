@@ -47,13 +47,7 @@ data(eco)
 summary(eco)
 ```
 
-The data comprises light-response curves, which describe the relationship between photosynthetically active radiation (`PAR`) and photosynthetic rate (`Pn`).
-
-There are `r nrow(eco)` observations. The `Species` variable is an indicator for plant species. Variable `PAR` will be used as the predictor for the node-specific model, variable `Pn` as the response. 
-
-Observations are repeated measures on the same plants. Variable `Specimen` provides an identifier for individual plants.
-
-Variable `noise` is artificially generated, independent from all other variables in the dataset. It will be used here to illustrate the trees can successfully distinguish signal from noise.
+The data comprises light-response curves, which describe the relationship between photosynthetically active radiation (`PAR`) and photosynthetic rate (`Pn`). There are `r nrow(eco)` observations. The `Species` variable is an indicator for plant species. Variable `PAR` will be used as the predictor for the node-specific model, variable `Pn` as the response. Observations are repeated measures on the same plants. Variable `Specimen` provides an identifier for individual plants. Variable `noise` is artificially generated, independent from all other variables in the dataset. It will be used here to illustrate the trees can successfully distinguish signal from noise.
 
 
 ```{r, eval = FALSE, echo = FALSE}
@@ -109,9 +103,10 @@ Often, the partitioning variables may not be measured on the level of individual
 
 We can plot the resulting tree using the `plot` method. We use the `gp` argument to adjust the value of graphical parameters (see `?gpar` for a list of changeable parameters), here we use it to impove readability of the plot by reducing the size of plotting symbols:
 
-```{r}
+```{r, fig.width = 5, fig.height=5}
 plot(st, which = "tree", gp = gpar(cex = .7))
 ```
+
 The resulting tree suggest that the Eugene and Sapium plants have the strongest reaction in terms of photosynthetic rate (`Pn`) to increased photosynthetically active radiation (`PAR`). 
 
 Although individual spline coefficients are difficult to interpret, they can be obtained using the `coef` method:
@@ -138,41 +133,43 @@ x <- st$data$PAR
 
 Note that the name of the spline basis is always `spline.`, followed by the name of the predictor variable of interest. It is also necessary to extracted the original values of the predictor variable of interest (`x`).
 
-```{r}
-matplot(x = x[order(x)], y = sb[order(x),], 
+```{r, fig.width=5, fig.height=3.5}
+matplot(x = x[order(x)], y = sb[order(x),], cex.lab =.7, cex.axis = .7,
         type = "l", xlab = "PAR", ylab = "Spline basis function")
 rug(x)
 ```
 
 Choosing a more complex spline basis increases flexibility, but may also make the fitted curves too wiggly. For example, a cubic spline with many more degrees of freedom yields wigglyness especially at the boundaries of the predictor variable space:  
 
-```{r}
+```{r, fig.width=5, fig.height=3.5}
 st2 <- splinetree(Pn ~ bs(PAR, df = 15) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(st2)
+plot(st2, which = "tree", gp = gpar(cex=.7))
 sb <- st2$data$spline.PAR
 x <- st2$data$PAR
-matplot(x = x[order(x)], y = sb[order(x),], 
+matplot(x = x[order(x)], y = sb[order(x),], cex.lab =.7, cex.axis = .7,
         type = "l", xlab = "PAR", ylab = "Spline basis function")
 rug(x)
 ```
 
-But note that the detected subgroups may actually be quite insensitive to different reasonable choices of degrees of freedom:
+But note that the detected subgroups may actually be quite insensitive to different but reasonable choices of degrees of freedom:
 
-```{r}
+```{r, fig.width=5, fig.height=3.5}
 st3 <- splinetree(Pn ~ ns(PAR, df = 2) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(st3)
+plot(st3, which = "tree", gp = gpar(cex = .7))
 sb <- st3$data$spline.PAR
 x <- st3$data$PAR
-matplot(x = x[order(x)], y = sb[order(x),], 
+matplot(x = x[order(x)], y = sb[order(x),], cex.lab =.7, cex.axis = .7,
         type = "l", xlab = "PAR", ylab = "Spline basis function")
 rug(x)
 ```
 
-This yields the same subgroup structure as the first tree, but with more flexible yet not too wiggly curves. The plotted results suggests strongest 
+This yields the same subgroup structure as the first tree, but with more flexible yet not too wiggly curves. 
 
-## subgroup detection in penalized or smoothing splines
+
+
+## Subgroup detection in penalized or smoothing splines
 
 Function `gamtree` allows for partitioning penalized non-parametric splines (i.e., *smoothing* splines). It uses package **gamm4** for estimation, package **merDeriv** to obtain derivatives used in the parameter stability tests used by package **partykit** for partitioning. 
 
@@ -181,6 +178,7 @@ Package **gamm4** allows for specifying and fitting GAMs just like package **mgc
 The smoothing parameter can be seen as a random-effects parameter in a mixed-effects model. This view allows to incorporate the smoothing parameter into the parameter stability tests performed in model-based recursive partitioning.
 
 The computational burden of fitting smoothing splines can be much heavier than of fitting parametric splines. Similarly, function `gamtree` is substantially higher than function `splinetree`. Yet, `gamtree` does not require the user to choose a fixed value for the degrees of freedom of the spline, but select the optimal value of the smoothing parameter in a data-driven manner. 
+
 
 
 ### Specifying the model formula 
@@ -192,8 +190,6 @@ response ~ local term | partitioning variables
 ```
 
 The response must be a single variable. Continuous, count, binomial variables and other responses are supported through specification of the `family` argument. The local term, separated from the response by a tilde (`~`), generally comprises a single smooth term. Although multiple smooths or predictors can in principle be specified for the local part, it is advised to restrict this part to only a single smooth or predictor of interest.
-
-### Fitting a gamtree without global effects
 
 We specify `Pn` as the response, regressed on a smoothing spline of `PAR`, and we specify `Species` as the only potential partitioning variable. Furthermore, we specify the `cluster` argument, to account for the fact that individual observations are nested within plants: 
 
@@ -223,26 +219,41 @@ plot(gt, which = "terms",
 
 We used the `gamplot_ctrl` argument to pass additional arguments to function `plot.gam()` (from package **mgcv**). We specified the `shade` argument, so that the confidence interval are depicted with a grey shaded area. Note however, that the plotted confidence intervals are overly optimistic, because they do not account for the searching of the tree (subgroup) structure.
 
-We obtain a summary of the fitted full GAM using the `summary` method:
+## Print, plot, predict and other methods
+
+We can print the fitted tree to see a summary:
 
 ```{r}
-summary(gt)
+gt$tree
 ```
 
+Furthermore, methods `predict`, `plot`, `coef`, `fixef`, `ranef`, `VarCorr` can be applied to inspect the fitted GAM tree model (results omitted):
+
+```{r}
+predict(gt, newdata = eco[1:5, ])
+coef(gt)
+fixef(gt)
+ranef(gt)
+VarCorr(gt)
+```
+
+## Partitioning method and computational speed
+
+By default, model-based recursive partitioning (Zeileis et al., 2008) is used for fitting the tree. Yet, this yields a rather heavy computational load for penalized spline models. Therefore, function `gamtree` also allows to employ conditional inference trees (or `ctree`; Hothorn et al., 2006) to fit the tree. This algorithm uses slightly different criteria for variable and split selection, which can result in different tree structures, but substantially lower computational load. The conditional inference tree method can be employed by specifying `method = "ctree"` in the call to function `gamtree`. By default, it uses `method = "mob"`.
 
 
 ## Specifying non-default arguments for the partitioning
 
-Let's say would prefer to collapse nodes 4 and 5, because we do not think the differences between the two species are relevant. We can do that through specifying the `maxdepth` argument of function `mob()`, which is used internally by function `gamtree()` to perform the partitioning (splitting). We can pass additional arguments to function `mob()` with the `mob_ctrl` argument:
+We might prefer to collapse nodes 4 and 5 based on substantive considerations, e.g., because we do not think the differences between the two species are important. We can do that through specifying the `maxdepth` argument of the tree algorithm used for splitting (functions `mob` or `ctree`, which are used internally by functions `gamtree` and `splinetree` to perform the partitioning (splitting). We can pass arguments to these algorithms using the `tree_ctrl` argument:
 
 ```{r}
 gamt2 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, cluster = Specimen, 
-               mob_ctrl = mob_control(maxdepth = 2L))
+               tree_ctrl = list(maxdepth = 2L))
 ```
 
-Note that function `mob_control()` (from package **partykit**) is used here, to generate a `list` of control arguments for function `mob()`.
+To see the possible arguments that can be passed in a list, see `?ctree_control` (if `method = "ctree"`) or `mob_control` (if `method = "mob"`.
 
-We inspect the result:
+We inspect the resulting tree:
 
 ```{r, fig.width = 4, fig.height=3}
 plot(gamt2, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
@@ -256,6 +267,8 @@ Eilers, P. H., & Marx, B. D. (1996). Flexible smoothing with B-splines and penal
 Fokkema, M., Smits, N., Zeileis, A., Hothorn, T., & Kelderman, H. (2018). Detecting treatment-subgroup interactions in clustered data with generalized linear mixed-effects model trees. *Behavior Research Methods*, *50*, 2016-2034.
 
 Fokkema, M., & Zeileis, A. (in press). Subgroup detection in linear growth curve models with generalized linear mixed model (GLMM) trees. *Behavior Research Methods*, 1-22.
+
+Hothorn, T., Hornik, K., & Zeileis, A. (2006). Unbiased recursive partitioning: A conditional inference framework. *Journal of Computational and Graphical statistics*, *15*(3), 651-674.
 
 Wang, T., & Merkle, E. C. (2018). merDeriv: derivative computations for linear mixed effects models with application to robust standard errors. *Journal of Statistical Software*, *87*, 1-16.
 
