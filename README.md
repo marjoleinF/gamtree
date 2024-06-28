@@ -3,15 +3,14 @@
 ## Introduction
 
 Package **gamtree** offers functionality for detection and
-identification of subgroups with differently shaped effects in GAMs. It 
-provides two main functions:
+identification of subgroups with differently shaped effects in GAMs:
 
--   `splinetree` for partitioning unpenalized or parametric splines (e.g.,
-    cubic and natural splines), package **glmertree** is used for estimation and
-    partitioning, and package **splines** (or **mgcv**, will be supported in future versions) is used for
+-   For partitioning unpenalized or parametric splines (e.g., cubic and
+    natural splines), package **glmertree** is used for estimation and
+    partitioning, and package **splines** or **mgcv** is used for
     setting up the spline bases.
 
--   `gamtree` for partitioning penalized or semi-parametric splines (i.e.,
+-   For partitioning penalized or semi-parametric splines (i.e.,
     *smoothing* splines), package **gamm4** is used for estimation and
     packages **partykit** and **merDeriv** are used for partitioning.
 
@@ -101,10 +100,10 @@ terms by a vertical bar(`|`), are specified by their names, separated by
 `+` signs:
 
 While functions `lmertree` and `glmertree` do allow for specifying
-splines directly in the model formula, it is
+splines directly in the model formula, for the terminal nodes it is
 likely beneficial to restrict the knot locations to be identical between
-all terminal nodes. As a result, the combined spline models in the child
-nodes of a parent node will be nested. Fixing the knot locations reduces the
+all terminal nodes. As such, the combined spline models in the child
+nodes of a parent node are nested. Fixing the knot locations reduces the
 risk of overfitting, which is likely beneficial when splines and
 recursive partitioning are combined. As Eilers and Marx (1996) already
 noted in the context of splines: “The choice of knots has been a subject
@@ -147,7 +146,7 @@ plot(st, which = "tree", gp = gpar(cex = .6))
 
 ![](inst/README-figures/README-unnamed-chunk-8-1.png)
 
-The resulting tree suggests that Eugene and Sapium plants have the
+The resulting tree suggest that the Eugene and Sapium plants have the
 strongest reaction in terms of photosynthetic rate (`Pn`) to increased
 photosynthetically active radiation (`PAR`).
 
@@ -175,21 +174,20 @@ predict(st, newdata = eco[1:5,])
 ### Choosing and evaluating the spline basis
 
 As hinted at with the quote from Eilers and Marx (1996), choosing a good
-spline basis can be challenging. It may be helpful to inspect the
-spline bases that were set up to evaluate, for example, whether the bases have
-optimal resolution and spacing in specific areas of interest. This 
-can be done though visual inspection of the fitted curves in the 
-terminal nodes. Alternatively, the individual spline basis functions can be
-be inspected as follows:
+spline basis can be challenging. It may be helpful to inspecting the
+spline bases that were set up to determine, e.g., whether the bases have
+optimal resolution and spacing in specific areas of interest.
+
+The spline basis can be extracted from the fitted tree as follows:
 
 ``` r
 sb <- st$data$spline.PAR
 x <- st$data$PAR
 ```
 
-Note that the name of the spline basis is always starts with `spline.`, followed by
-the name of the predictor variable of interest. For plotting the spline bases, it is also necessary to
-extract the original values of the predictor variable of interest
+Note that the name of the spline basis is always `spline.`, followed by
+the name of the predictor variable of interest. It is also necessary to
+extracted the original values of the predictor variable of interest
 (`x`).
 
 ``` r
@@ -201,7 +199,7 @@ rug(x)
 ![](inst/README-figures/README-unnamed-chunk-12-1.png)
 
 Choosing a more complex spline basis increases flexibility, but may also
-make the fitted curves too wiggly. For example, a cubic spline with
+make the fitted curves too wiggly. For example, a cubic spline with many
 more degrees of freedom yields wigglyness especially at the boundaries
 of the predictor variable space:
 
@@ -224,7 +222,7 @@ rug(x)
 ![](inst/README-figures/README-unnamed-chunk-13-2.png)
 
 But note that the detected subgroups may actually be quite insensitive
-to different but reasonable choices of the degrees of freedom:
+to different but reasonable choices of degrees of freedom:
 
 ``` r
 st3 <- splinetree(Pn ~ ns(PAR, df = 2) | (1|Specimen) | Species, data = eco, 
@@ -244,8 +242,8 @@ rug(x)
 
 ![](inst/README-figures/README-unnamed-chunk-14-2.png)
 
-This results in the same subgroup structure as before, but with less
-flexible curves.
+This yields the same subgroup structure as the first tree, but with more
+flexible yet not too wiggly curves.
 
 ## Subgroup detection in penalized or smoothing splines
 
@@ -264,7 +262,7 @@ parameter, which controls the wigglyness of the fit. With parametric
 splines, the wigglyness is determined by the user through the choice of
 spline basis and number and location of knots. With smoothing splines,
 the optimal amount of wigglyness is estimated in a data-driven manner.
-Thus, users have to worry less about the choice of basis and
+Thus, users have to worry (much) less about the choice of basis and
 number and location of knots. Furthermore, function `gamtree` allows the
 amount of wigglyness to be a critical factor in subgroup detection.
 
@@ -275,13 +273,10 @@ recursive partitioning.
 
 The computational burden of fitting smoothing splines can be much
 heavier than of fitting parametric splines. Similarly, function
-`gamtree` is has substantially higher computational load than function `splinetree`. Yet,
+`gamtree` is substantially higher than function `splinetree`. Yet,
 `gamtree` does not require the user to choose a fixed value for the
-degrees of freedom of the spline, but selects the optimal value of the
-smoothing parameter in a data-driven manner. A disadvantage of `gamtree` is
-that it does not allow for keeping the spline bases identical between nodes.
-Yet, in case of substantial shape differences between subgroups, this might
-also be an advantage.
+degrees of freedom of the spline, but select the optimal value of the
+smoothing parameter in a data-driven manner.
 
 ### Specifying the model formula
 
@@ -302,7 +297,7 @@ smooths or predictors can in principle be specified for the local part,
 it is advised to restrict this part to only a single smooth or predictor
 of interest.
 
-Again we specify `Pn` as the response, regressed on a smoothing spline of
+We specify `Pn` as the response, regressed on a smoothing spline of
 `PAR`, and we specify `Species` as the only potential partitioning
 variable. Furthermore, we specify the `cluster` argument, to account for
 the fact that individual observations are nested within plants:
@@ -323,7 +318,7 @@ plot(gt, which = "tree", treeplot_ctrl = list(gp = gpar(cex = .5)))
 Through the `treeplot_ctrl` argument, we can specify additional argument
 to be passed to function `plot.party()` (from package **partykit**). We
 passed the `gp` argument, to have a smaller font size for the node and
-path labels (the default is `cex = 1`).
+path labels than with the default `cex = 1`.
 
 The plots indicate similar trajectories in all three terminal nodes,
 revealing a sharp increase first, which then levels off. The increase
@@ -335,8 +330,8 @@ observations. They are not very smooth, because they reflect marginal
 effects, which can be strongly influenced by where data was observed (or
 not), combined with the effects of other variables.
 
-We can therefore also plot conditional effects (i.e., keeping values of all other
-predictors fixed at the same value, often zero) of the predictors:
+We can therefore also plot conditional effects (i.e., keeping all other
+predictors fixed) of the predictors:
 
 ``` r
 par(mfrow = c(2, 2))
@@ -348,7 +343,7 @@ plot(gt, which = "terms",
 
 We used the `gamplot_ctrl` argument to pass additional arguments to
 function `plot.gam()` (from package **mgcv**). We specified the `shade`
-argument, so that the confidence intervals are depicted with a grey
+argument, so that the confidence interval are depicted with a grey
 shaded area. Note however, that the plotted confidence intervals are
 overly optimistic, because they do not account for the searching of the
 tree (subgroup) structure.
@@ -405,7 +400,8 @@ gt$tree
 ```
 
 Furthermore, methods `predict`, `plot`, `coef`, `fixef`, `ranef`,
-`VarCorr` can be applied to inspect the fitted GAM tree model:
+`VarCorr` can be applied to inspect the fitted GAM tree model (results
+omitted):
 
 ``` r
 predict(gt, newdata = eco[1:5, ])
@@ -450,11 +446,10 @@ used for fitting the tree. Yet, this yields a rather heavy computational
 load for penalized spline models. Therefore, function `gamtree` also
 allows to employ conditional inference trees (or `ctree`; Hothorn et
 al., 2006) to fit the tree. This algorithm uses slightly different
-criteria for variable and split selection. The resulting tree structures 
-are generally similar, but may often not be identical. In any case, `ctree` 
-tends to substantially reduce computational load. The
+criteria for variable and split selection, which can result in different
+tree structures, but substantially lower computational load. The
 conditional inference tree method can be employed by specifying
-`method = "ctree"` in the call to function `gamtree`, hich by default 
+`method = "ctree"` in the call to function `gamtree`. By default, it
 uses `method = "mob"`.
 
 ## Specifying non-default arguments for the partitioning
@@ -474,7 +469,7 @@ gamt2 <- gamtree(Pn ~ s(PAR, k=5L) | Species, data = eco, cluster = Specimen,
 
 To see the possible arguments that can be passed in a list, see
 `?ctree_control` (if `method = "ctree"`) or `mob_control` (if
-`method = "mob"`).
+`method = "mob"`.
 
 We inspect the resulting tree:
 
