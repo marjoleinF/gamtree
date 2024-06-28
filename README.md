@@ -141,7 +141,7 @@ list of changeable parameters), here we use it to impove readability of
 the plot by reducing the size of plotting symbols:
 
 ``` r
-plot(st, which = "tree", gp = gpar(cex = .7))
+plot(st, which = "tree", gp = gpar(cex = .6))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-8-1.png)
@@ -206,7 +206,7 @@ of the predictor variable space:
 ``` r
 st2 <- splinetree(Pn ~ bs(PAR, df = 15) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(st2, which = "tree", gp = gpar(cex=.7))
+plot(st2, which = "tree", gp = gpar(cex = .6))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-13-1.png)
@@ -227,7 +227,7 @@ to different but reasonable choices of degrees of freedom:
 ``` r
 st3 <- splinetree(Pn ~ ns(PAR, df = 2) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(st3, which = "tree", gp = gpar(cex = .7))
+plot(st3, which = "tree", gp = gpar(cex = .6))
 ```
 
 ![](inst/README-figures/README-unnamed-chunk-14-1.png)

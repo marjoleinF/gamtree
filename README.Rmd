@@ -103,8 +103,8 @@ Often, the partitioning variables may not be measured on the level of individual
 
 We can plot the resulting tree using the `plot` method. We use the `gp` argument to adjust the value of graphical parameters (see `?gpar` for a list of changeable parameters), here we use it to impove readability of the plot by reducing the size of plotting symbols:
 
-```{r, fig.width = 5, fig.height=5}
-plot(st, which = "tree", gp = gpar(cex = .7))
+```{r, fig.width = 5, fig.height=3.5}
+plot(st, which = "tree", gp = gpar(cex = .6))
 ```
 
 The resulting tree suggest that the Eugene and Sapium plants have the strongest reaction in terms of photosynthetic rate (`Pn`) to increased photosynthetically active radiation (`PAR`). 
@@ -144,7 +144,7 @@ Choosing a more complex spline basis increases flexibility, but may also make th
 ```{r, fig.width=5, fig.height=3.5}
 st2 <- splinetree(Pn ~ bs(PAR, df = 15) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(st2, which = "tree", gp = gpar(cex=.7))
+plot(st2, which = "tree", gp = gpar(cex = .6))
 sb <- st2$data$spline.PAR
 x <- st2$data$PAR
 matplot(x = x[order(x)], y = sb[order(x),], cex.lab =.7, cex.axis = .7,
@@ -157,7 +157,7 @@ But note that the detected subgroups may actually be quite insensitive to differ
 ```{r, fig.width=5, fig.height=3.5}
 st3 <- splinetree(Pn ~ ns(PAR, df = 2) | (1|Specimen) | Species, data = eco, 
                  cluster = Specimen)
-plot(st3, which = "tree", gp = gpar(cex = .7))
+plot(st3, which = "tree", gp = gpar(cex = .6))
 sb <- st3$data$spline.PAR
 x <- st3$data$PAR
 matplot(x = x[order(x)], y = sb[order(x),], cex.lab =.7, cex.axis = .7,
