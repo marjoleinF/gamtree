@@ -12,8 +12,8 @@ Description: Recursively partitions the observations in a dataset, based on the 
              modeling multilevel and longitudinal data. Packages mgcv and splines are used for 
              spline and model estimation, packages partykit and merDeriv are used for partitioning
              and derivative computations. 
-Depends: R (>= 3.5.3), glmertree
-Imports: Formula, splines, mgcv, partykit, lme4, gamm4, merDeriv, nlme
+Depends: R (>= 3.5.3), glmertree, lme4
+Imports: Formula, splines, mgcv, partykit, gamm4, merDeriv, nlme, grid
 License: GPL-2 | GPL-3
 Encoding: UTF-8
 LazyData: true

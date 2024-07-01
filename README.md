@@ -14,8 +14,8 @@ identification of subgroups with differently shaped effects in GAMs:
     *smoothing* splines), package **gamm4** is used for estimation and
     packages **partykit** and **merDeriv** are used for partitioning.
 
-Package **gamtree** is still under development. The current version of
-the package can be installed as follows:
+Package **gamtree** is still under development. The current development
+version can be installed as follows:
 
 ``` r
 library("devtools")
@@ -173,10 +173,10 @@ predict(st, newdata = eco[1:5,])
 
 ### Choosing and evaluating the spline basis
 
-As hinted at with the quote from Eilers and Marx (1996), choosing a good
-spline basis can be challenging. It may be helpful to inspecting the
-spline bases that were set up to determine, e.g., whether the bases have
-optimal resolution and spacing in specific areas of interest.
+As hinted at with the quote from Eilers and Marx (1996) above, choosing
+a good spline basis can be challenging. It may be helpful to inspecting
+the spline bases that were set up to determine, e.g., whether the bases
+have optimal resolution and spacing in specific areas of interest.
 
 The spline basis can be extracted from the fitted tree as follows:
 
@@ -186,9 +186,10 @@ x <- st$data$PAR
 ```
 
 Note that the name of the spline basis is always `spline.`, followed by
-the name of the predictor variable of interest. It is also necessary to
-extracted the original values of the predictor variable of interest
-(`x`).
+the name of the predictor variable of interest. For plotting the spline
+bases, it is also necessary to extracted the original values of the
+predictor variable of interest (`x`). We add a rug to indicate on the
+*x*-axis where data was observed:
 
 ``` r
 matplot(x = x[order(x)], y = sb[order(x),], cex.lab =.7, cex.axis = .7,
@@ -242,8 +243,8 @@ rug(x)
 
 ![](inst/README-figures/README-unnamed-chunk-14-2.png)
 
-This yields the same subgroup structure as the first tree, but with more
-flexible yet not too wiggly curves.
+This yields the same subgroup structure as the first tree, but with less
+flexible curves.
 
 ## Subgroup detection in penalized or smoothing splines
 
@@ -275,8 +276,8 @@ The computational burden of fitting smoothing splines can be much
 heavier than of fitting parametric splines. Similarly, function
 `gamtree` is substantially higher than function `splinetree`. Yet,
 `gamtree` does not require the user to choose a fixed value for the
-degrees of freedom of the spline, but select the optimal value of the
-smoothing parameter in a data-driven manner.
+degrees of freedom of the spline, but automatically selects the optimal
+value of the smoothing parameter in a data-driven manner.
 
 ### Specifying the model formula
 

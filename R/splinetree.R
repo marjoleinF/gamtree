@@ -79,7 +79,7 @@ splinetree <- function(formula, data, family = "gaussian", ...) {
   
   ## fit tree
   tree <- if (family == "gaussian") {
-    lmertree(formula = formula, data = data)
+    lmertree(formula = formula, data = data, ...)
   } else {
     glmertree(formula = formula, data = data, family = family, ...)
   }

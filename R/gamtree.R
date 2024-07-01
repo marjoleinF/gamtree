@@ -4,14 +4,18 @@ utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster", 
 ## TODO: Create cv.splinetree and cv.gamtree functions to obtain hypothesis tests.
 ## TODO: Allow splinetree to use fixed splines with mgcv.
 ## TODO: Build unit tests.
+## TODO: Reduce computational load of merDeriv with 
+## TODO: Speed up computations. Bottleneck of glmtree seems to be split selection. Check with AZ if 
+## we can do other approach than exhaustive search. Summing scores within clusters in ytrafo may speed up
+## ctree. Check with profiling whether merDeriv or ctree is the bottleneck, as ctree tests may involve lots
+## of matrix operations as well. Finally, may be possible to improve speed of merDeriv.
 
 
 ## Impossible: Can enforce knot locations to apply to all nodes similarly? In mgcv::gam with smoothCon, not in gamm4.
 
-
 ## Done: Allow use of function s in the model formula for gamtree with method = "ctree" and "mob"
 ## Done: Can use a cubic spline basis in gamtree? Yes, just pass bs = "cr" to function s.
-## Done: Use ctree for partitioning penalized GAMs
+## Done: Use ctree for partitioning penalized GAMs.
 
 
 
@@ -72,7 +76,7 @@ utils::globalVariables(c(".tree", ".offset", ".global", ".weights", ".cluster", 
 #' by the argument of the same name of the current function.
 #' @param parm vector of one or more integers, indicating which parameters should be
 #' included in the parameter stability tests. The default \code{c(1, 2, 4)} includes
-#' the intercept, linear slope and error variance. The 3rd parameter is the variance
+#' the intercept, linear slope and error variance of the smoothing spline. The 3rd parameter is the variance
 #' of smooth term. It is excluded by default, because its inclusion yields too high
 #' power in many situations.
 #' @param ... additional arguments to be passed to function \code{\link[gamm4]{gamm4}}. 
@@ -140,7 +144,7 @@ gamtree <- function(formula, data, weights = NULL, REML = TRUE,
   ##  - lgf is for fitting node-specific GAM in the nodes
   ##  - ggf is an intermediate formula, used for creating full GAM formula later
   ##  - fgf is for fitting full GAM
-  ff <- as.Formula(formula)
+  ff <- Formula::as.Formula(formula)
   lgf <- formula(ff, lhs = NULL, rhs = 1)
   # TODO: Test if by-statements problematic for partitioning  
   local_vars <- all.vars(formula(ff, lhs = 0, rhs = 1))
@@ -201,33 +205,32 @@ gamtree <- function(formula, data, weights = NULL, REML = TRUE,
     
     ## TODO: check if cluster argument is correctly passed, if not, implement
 
-    ytrafo_gamm4 <- function(weights, offset, cluster = NULL, lgf = lgf, REML, 
-                      response, local_vars, ...) {
+    ytrafo_gamm4 <- function(.lgf, .REML = TRUE, .response, .local_vars, 
+                             .parm = c(1,2,4), ...) {
       
-      gamm4_form <- gsub(as.character(response), "y", gsub(local_vars, "x", lgf))
+      gamm4_form <- gsub(as.character(.response), "y", gsub(.local_vars, "x", .lgf))
       gamm4_form <- formula(paste0(gamm4_form[2L], gamm4_form[1L], gamm4_form[3L])) 
+      .REML <- eval(.REML)
+      .parm <- eval(.parm)
       
       function(y, x, start = NULL, weights, offset, cluster = NULL, 
                             estfun = TRUE, object = TRUE, ...) {
         environment(gamm4_form) <- environment()
-        mod <- gamm4::gamm4(gamm4_form, REML = REML, ...)
+        mod <- gamm4::gamm4(gamm4_form, REML = .REML, ...)
         class(mod) <- "gamm4"
-        list(object = mod, estfun = merDeriv::estfun.lmerMod(mod$mer, level = 1L)[, parm])
+        list(object = mod, estfun = merDeriv::estfun.lmerMod(mod$mer, level = 1L)[, .parm])
       }
     }
     
     tree <- ctree(tf, data = data, 
-                  ytrafo = ytrafo_gamm4(lgf = lgf, REML = REML, response = response, 
-                                        local_vars = local_vars), 
+                  ytrafo = ytrafo_gamm4(.lgf = lgf, .REML = REML, .response = response, 
+                                        .local_vars = local_vars, .parm = parm), 
                   control = tree_ctrl, ...)
     
     ## Fill in terminal nodes if they have nobs < minsplit (ctree defaults: minsplit=20L, minbucket=7L)
     node_ids <- predict(tree, type = "node")
     tree_node <- as.list(tree$node)
     for (i in 1L:length(tree)) {
-      
-      ## TODO: 
-      
       if (is.null(tree[[i]]$node$info)) {
         
         ## TODO: Allow for passing further arguments to gamm4 
@@ -245,7 +248,6 @@ gamtree <- function(formula, data, weights = NULL, REML = TRUE,
       }
     }
     tree$node <- as.partynode(tree_node)
-    #class(tf) <- c("Formula", "formula")
     tree$info$Formula <- Formula::Formula(tf)
   }
 
@@ -356,12 +358,12 @@ fixef.gamtree <- function(object, ...) {
   if (object$method == "mob") {
     fixeff <- do.call(rbind, coef(object$tree)[, "fixef"])
     colnames(fixeff) <- c("(Intercept)", 
-                         all.vars(formula(as.Formula(object$formula), rhs = 1L, lhs = 0L)))
+                         all.vars(formula(Formula::as.Formula(object$formula), rhs = 1L, lhs = 0L)))
   } else if (object$method == "ctree") {
     rows <- sort(unique(object$tree$fitted[["(fitted)"]]))
     fixeff <- matrix(NA, nrow = length(rows), ncol = 2L, 
                      dimnames = list(as.character(rows), 
-                                     c("(Intercept)", all.vars(formula(as.Formula(object$formula), rhs = 1L, lhs = 0L)))))
+                                     c("(Intercept)", all.vars(formula(Formula::as.Formula(object$formula), rhs = 1L, lhs = 0L)))))
     for (i in rows) {
       fixeff[as.character(i), ] <- fixef(object$tree[[i]]$node$info$object$mer)  
     }
@@ -528,18 +530,18 @@ print_gam <- function (x, ...) {
 #' summary(gt)
 summary.gamtree <- function(object, ...) {
 
-  tree_node <- as.list(object$tree$node)
-  if (object$method == "mob") {
-    for (i in unique(object$tree$fitted[["(fitted)"]])) {
-      ## To get the correct (or at least one) model in the terminal nodes
-      tree_node[[i]]$info$coefficients <- paste0("node ", i, print_gam(tree_node[[i]]$info$object$gam))
-    }
-    object <- as.partynode(tree_node)
-  } else {
-    ## TODO: Adjust so that summary will be printed nicely
-  }
+  #tree_node <- as.list(object$tree$node)
+  #if (object$method == "mob") {
+  #  for (i in unique(object$tree$fitted[["(fitted)"]])) {
+  #    ## To get the correct (or at least one) model in the terminal nodes
+  #    tree_node[[i]]$info$coefficients <- paste0("node ", i, print_gam(tree_node[[i]]$info$object$gam))
+  #  }
+  #  object <- as.partynode(tree_node)
+  #} else {
+  #  ## TODO: Adjust so that summary will be printed nicely
+  #}
   summary(object$tree, ...)
-  
+
 }
 
 
@@ -589,6 +591,7 @@ summary.gamtree <- function(object, ...) {
 #' plot(gt, which = "tree") # default is which = 'both'
 #' plot(gt, which = "terms")
 #' @importFrom graphics plot par
+#' @importFrom grid gpar
 #' @export
 plot.gamtree <- function(x, which = "both", 
                          ylim = "firstnode", treeplot_ctrl = list(), 
@@ -729,7 +732,7 @@ predict.gamtree <- function(object, newdata = NULL, type = "link", ...) {
   if (!type %in% c("link", "response", "node")) warning("Argument type should be one of 'link', 'response' or 'node'")
 
   ## Check whether there is a global GAM
-  global_gam <- all(length(as.Formula(object$formula)) == c(1, 3))
+  global_gam <- all(length(Formula::as.Formula(object$formula)) == c(1, 3))
   
   ## Check whether newdata is supplied
   if (is.null(newdata)) {
@@ -751,7 +754,7 @@ predict.gamtree <- function(object, newdata = NULL, type = "link", ...) {
       ## name of node-specific predictor variable and compute predictions node-by-node
       node_ids <- predict(object$tree, newdata = newdata, type = "node")
       preds <- rep(NA, times = length(node_ids))
-      x_name <- try(all.vars(formula(as.Formula(object$formula), lhs = 0, rhs = 1L)))
+      x_name <- try(all.vars(formula(Formula::as.Formula(object$formula), lhs = 0, rhs = 1L)))
       if (inherits(x_name, "try-error")) stop("Name of predictor variable could not be recovered.")
       if (length(x_name) != 1L) warning("There seem to be multiple predictor variables for the node-specific model, results may not be correct.")
       newdata$x <- newdata[ , x_name]

@@ -65,7 +65,7 @@ full mixed-effects gam model is printed.}
 
 \item{parm}{vector of one or more integers, indicating which parameters should be
 included in the parameter stability tests. The default \code{c(1, 2, 4)} includes
-the intercept, linear slope and error variance. The 3rd parameter is the variance
+the intercept, linear slope and error variance of the smoothing spline. The 3rd parameter is the variance
 of smooth term. It is excluded by default, because its inclusion yields too high
 power in many situations.}
 
