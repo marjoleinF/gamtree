@@ -80,7 +80,7 @@ spline bases.
 The model is specified through a four-part formula, following the same
 format as `lmertree` or `glmertree`. The four-part formula comprises a
 response variable, local subgroup-specific effects, global effects and
-partitioning variables. Informally written, it the model formula has the
+partitioning variables. Informally written, the model formula has the
 form:
 
 ``` r
