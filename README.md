@@ -1,7 +1,5 @@
 # gamtree: generalized additive model (GAM) trees
 
-## Introduction
-
 Package **gamtree** offers functionality for detection and
 identification of subgroups with differently shaped effects in GAMs:
 
@@ -13,6 +11,11 @@ identification of subgroups with differently shaped effects in GAMs:
 -   For partitioning penalized or semi-parametric splines (i.e.,
     *smoothing* splines), package **gamm4** is used for estimation and
     packages **partykit** and **merDeriv** are used for partitioning.
+
+The main use case would be subgroup detection in longitudinal data and 
+time series, which is the main motivation for developing this package. 
+However, many different types of applications involving GAMs and mixed-effects 
+models are possible. 
 
 Package **gamtree** is still under development. The current development
 version can be installed as follows:
