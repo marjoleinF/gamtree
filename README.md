@@ -87,13 +87,12 @@ form:
 response ~ local term | global terms | partitioning variables
 ```
 
-The response must be a single variable. Continuous, count, binomial
-variables and other responses are supported through specification of the
+The response must be a single variable. Continuous, count, binomial 
+and other response types are supported through specification of the
 `family` argument. The local term, separated from the response by a
-tilde (`~`) for GAM trees will comprise spline terms. Although splines
+tilde (`~`) should comprise on or more spline terms. Although splines
 can in principle be specified for multiple predictors, it is advised to
-restrict the local terms to only a spline of only a single predictor of
-interest.
+restrict the local terms to a spline of a single predictor of interest.
 
 The global terms, separated from the local term comprise one or more
 smooth and/or parametric (fixed or random) terms, as they would be
